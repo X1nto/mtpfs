@@ -1,0 +1,916 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4B3E5CB0300A9D9000FF195A /* mtpd in Embed Daemon */ = {isa = PBXBuildFile; fileRef = 4B3E5CA5300A9D9000FF195A /* mtpd */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		4B3E5CC2300AA45800FF195A /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B3E5CC1300AA45800FF195A /* IOKit.framework */; };
+		4B3E5CC4300AA46A00FF195A /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B3E5CC3300AA46A00FF195A /* CoreFoundation.framework */; };
+		4BDB230D3010078D00F5A04A /* mtphelperd in Embed Helper */ = {isa = PBXBuildFile; fileRef = 4BDB23003010060D00F5A04A /* mtphelperd */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		4BFE0003300D3BCF0092E367 /* MTPFileSystem.appex in Embed ExtensionKit Extensions */ = {isa = PBXBuildFile; fileRef = 4BFE0001300D3BCF0092E367 /* MTPFileSystem.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4B3E5CAE300A9D9000FF195A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4B5AECE23009226500E6BE67 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4B3E5CA4300A9D9000FF195A;
+			remoteInfo = mtpd;
+		};
+		4BDB23333010180200F5A04A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4B5AECE23009226500E6BE67 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4BDB22FF3010060D00F5A04A;
+			remoteInfo = mtphelperd;
+		};
+		4BFE0002300D3BCF0092E367 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4B5AECE23009226500E6BE67 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4BFE000B300D3BCF0092E367;
+			remoteInfo = MTPFSPathURLBackend;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		4B3E5CB5300A9D9000FF195A /* Embed Daemon */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				4B3E5CB0300A9D9000FF195A /* mtpd in Embed Daemon */,
+			);
+			name = "Embed Daemon";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4BAA0004300B0000AAAA0001 /* Copy LaunchAgent */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Contents/Library/LaunchAgents;
+			dstSubfolderSpec = 1;
+			files = (
+			);
+			name = "Copy LaunchAgent";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4BD6D493300A49D00097464B /* Embed ExtensionKit Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(EXTENSIONS_FOLDER_PATH)";
+			dstSubfolderSpec = 16;
+			files = (
+				4BFE0003300D3BCF0092E367 /* MTPFileSystem.appex in Embed ExtensionKit Extensions */,
+			);
+			name = "Embed ExtensionKit Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4BDB22FE3010060D00F5A04A /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		4BDB230C3010077D00F5A04A /* Embed Helper */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				4BDB230D3010078D00F5A04A /* mtphelperd in Embed Helper */,
+			);
+			name = "Embed Helper";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4BDB230E301007C600F5A04A /* Copy LaunchDaemon */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Contents/Library/LaunchDaemons;
+			dstSubfolderSpec = 1;
+			files = (
+			);
+			name = "Copy LaunchDaemon";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		4B3E5CA5300A9D9000FF195A /* mtpd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mtpd; sourceTree = BUILT_PRODUCTS_DIR; };
+		4B3E5CBA300AA38700FF195A /* libmtp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmtp.a; path = Vendor/lib/libmtp.a; sourceTree = "<group>"; };
+		4B3E5CBB300AA38700FF195A /* libusb-1.0.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libusb-1.0.a"; path = "Vendor/lib/libusb-1.0.a"; sourceTree = "<group>"; };
+		4B3E5CC1300AA45800FF195A /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		4B3E5CC3300AA46A00FF195A /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
+		4B5AECEA3009226500E6BE67 /* MTPFS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MTPFS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4BDB23003010060D00F5A04A /* mtphelperd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mtphelperd; sourceTree = BUILT_PRODUCTS_DIR; };
+		4BFE0001300D3BCF0092E367 /* MTPFileSystem.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = MTPFileSystem.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		4BAA0006300B0000AAAA0001 /* Exceptions for "IPC" folder in "MTPApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				MTPMountHelperProtocol.swift,
+				MTPServiceProtocol.swift,
+			);
+			target = 4B5AECE93009226500E6BE67 /* MTPApp */;
+		};
+		4BDB234530102E7300F5A04A /* Exceptions for "Vendor" folder in "mtpd" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				lib/libmtp.a,
+				"lib/libusb-1.0.a",
+			);
+			target = 4B3E5CA4300A9D9000FF195A /* mtpd */;
+		};
+		4BFE0005300D3BCF0092E367 /* Exceptions for "MTPFileSystem" folder in "MTPFileSystem" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 4BFE000B300D3BCF0092E367 /* MTPFileSystem */;
+		};
+		4BFE0007300D3BCF0092E367 /* Exceptions for "IPC" folder in "MTPFileSystem" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				MTPServiceProtocol.swift,
+			);
+			target = 4BFE000B300D3BCF0092E367 /* MTPFileSystem */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		4BDB232230100C5700F5A04A /* Exceptions for "mtpd" folder in "Copy LaunchAgent" phase from "MTPApp" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 4BAA0004300B0000AAAA0001 /* Copy LaunchAgent */;
+			membershipExceptions = (
+				dev.xinto.mtpfs.mtpd.plist,
+			);
+		};
+		4BDB232F3010164C00F5A04A /* Exceptions for "mtphelperd" folder in "Copy LaunchDaemon" phase from "MTPApp" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 4BDB230E301007C600F5A04A /* Copy LaunchDaemon */;
+			membershipExceptions = (
+				dev.xinto.mtpfs.mtphelperd.plist,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		4B3E5CA6300A9D9000FF195A /* IPC */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4BAA0006300B0000AAAA0001 /* Exceptions for "IPC" folder in "MTPApp" target */,
+				4BFE0007300D3BCF0092E367 /* Exceptions for "IPC" folder in "MTPFileSystem" target */,
+			);
+			path = IPC;
+			sourceTree = "<group>";
+		};
+		4B5AECEC3009226500E6BE67 /* MTPApp */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MTPApp;
+			sourceTree = "<group>";
+		};
+		4BD29CA3300D3BCF0092E367 /* MTPFileSystem */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4BFE0005300D3BCF0092E367 /* Exceptions for "MTPFileSystem" folder in "MTPFileSystem" target */,
+			);
+			path = MTPFileSystem;
+			sourceTree = "<group>";
+		};
+		4BDB23013010060D00F5A04A /* mtphelperd */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4BDB232F3010164C00F5A04A /* Exceptions for "mtphelperd" folder in "Copy LaunchDaemon" phase from "MTPApp" target */,
+			);
+			path = mtphelperd;
+			sourceTree = "<group>";
+		};
+		4BDB232030100C5600F5A04A /* mtpd */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4BDB232230100C5700F5A04A /* Exceptions for "mtpd" folder in "Copy LaunchAgent" phase from "MTPApp" target */,
+			);
+			path = mtpd;
+			sourceTree = "<group>";
+		};
+		4BDB233D3010264F00F5A04A /* Vendor */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4BDB234530102E7300F5A04A /* Exceptions for "Vendor" folder in "mtpd" target */,
+			);
+			path = Vendor;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4B3E5CA2300A9D9000FF195A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4B3E5CC4300AA46A00FF195A /* CoreFoundation.framework in Frameworks */,
+				4B3E5CC2300AA45800FF195A /* IOKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4B5AECE73009226500E6BE67 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4BDB22FD3010060D00F5A04A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4BFE0008300D3BCF0092E367 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		4B3E5CB9300AA38700FF195A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4B3E5CC3300AA46A00FF195A /* CoreFoundation.framework */,
+				4B3E5CC1300AA45800FF195A /* IOKit.framework */,
+				4B3E5CBA300AA38700FF195A /* libmtp.a */,
+				4B3E5CBB300AA38700FF195A /* libusb-1.0.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4B5AECE13009226500E6BE67 = {
+			isa = PBXGroup;
+			children = (
+				4B5AECEC3009226500E6BE67 /* MTPApp */,
+				4BD29CA3300D3BCF0092E367 /* MTPFileSystem */,
+				4B3E5CA6300A9D9000FF195A /* IPC */,
+				4BDB23013010060D00F5A04A /* mtphelperd */,
+				4BDB232030100C5600F5A04A /* mtpd */,
+				4B3E5CB9300AA38700FF195A /* Frameworks */,
+				4BDB233D3010264F00F5A04A /* Vendor */,
+				4B5AECEB3009226500E6BE67 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4B5AECEB3009226500E6BE67 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4B5AECEA3009226500E6BE67 /* MTPFS.app */,
+				4BFE0001300D3BCF0092E367 /* MTPFileSystem.appex */,
+				4B3E5CA5300A9D9000FF195A /* mtpd */,
+				4BDB23003010060D00F5A04A /* mtphelperd */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4B3E5CA4300A9D9000FF195A /* mtpd */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4B3E5CB2300A9D9000FF195A /* Build configuration list for PBXNativeTarget "mtpd" */;
+			buildPhases = (
+				4B3E5CA1300A9D9000FF195A /* Sources */,
+				4B3E5CA2300A9D9000FF195A /* Frameworks */,
+				4B3E5CA3300A9D9000FF195A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				4B3E5CA6300A9D9000FF195A /* IPC */,
+				4BDB232030100C5600F5A04A /* mtpd */,
+			);
+			name = mtpd;
+			productName = mtpd;
+			productReference = 4B3E5CA5300A9D9000FF195A /* mtpd */;
+			productType = "com.apple.product-type.tool";
+		};
+		4B5AECE93009226500E6BE67 /* MTPApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4B5AECF53009226600E6BE67 /* Build configuration list for PBXNativeTarget "MTPApp" */;
+			buildPhases = (
+				4B5AECE63009226500E6BE67 /* Sources */,
+				4B5AECE73009226500E6BE67 /* Frameworks */,
+				4B5AECE83009226500E6BE67 /* Resources */,
+				4BD6D493300A49D00097464B /* Embed ExtensionKit Extensions */,
+				4B3E5CB5300A9D9000FF195A /* Embed Daemon */,
+				4BDB230C3010077D00F5A04A /* Embed Helper */,
+				4BAA0004300B0000AAAA0001 /* Copy LaunchAgent */,
+				4BDB230E301007C600F5A04A /* Copy LaunchDaemon */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4BDB23343010180200F5A04A /* PBXTargetDependency */,
+				4B3E5CAF300A9D9000FF195A /* PBXTargetDependency */,
+				4BFE000C300D3BCF0092E367 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				4B5AECEC3009226500E6BE67 /* MTPApp */,
+			);
+			name = MTPApp;
+			productName = FinderMTP;
+			productReference = 4B5AECEA3009226500E6BE67 /* MTPFS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		4BDB22FF3010060D00F5A04A /* mtphelperd */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4BDB23043010060D00F5A04A /* Build configuration list for PBXNativeTarget "mtphelperd" */;
+			buildPhases = (
+				4BDB22FC3010060D00F5A04A /* Sources */,
+				4BDB22FD3010060D00F5A04A /* Frameworks */,
+				4BDB22FE3010060D00F5A04A /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				4B3E5CA6300A9D9000FF195A /* IPC */,
+				4BDB23013010060D00F5A04A /* mtphelperd */,
+			);
+			name = mtphelperd;
+			packageProductDependencies = (
+			);
+			productName = mtphelperd;
+			productReference = 4BDB23003010060D00F5A04A /* mtphelperd */;
+			productType = "com.apple.product-type.tool";
+		};
+		4BFE000B300D3BCF0092E367 /* MTPFileSystem */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4BFE000F300D3BCF0092E367 /* Build configuration list for PBXNativeTarget "MTPFileSystem" */;
+			buildPhases = (
+				4BFE0009300D3BCF0092E367 /* Sources */,
+				4BFE0008300D3BCF0092E367 /* Frameworks */,
+				4BFE000A300D3BCF0092E367 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				4BD29CA3300D3BCF0092E367 /* MTPFileSystem */,
+			);
+			name = MTPFileSystem;
+			productName = MTPFSPathURLBackend;
+			productReference = 4BFE0001300D3BCF0092E367 /* MTPFileSystem.appex */;
+			productType = "com.apple.product-type.extensionkit-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4B5AECE23009226500E6BE67 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					4B3E5CA4300A9D9000FF195A = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					4B5AECE93009226500E6BE67 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					4BDB22FF3010060D00F5A04A = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					4BFE000B300D3BCF0092E367 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+				};
+			};
+			buildConfigurationList = 4B5AECE53009226500E6BE67 /* Build configuration list for PBXProject "FinderMTP" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 4B5AECE13009226500E6BE67;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 4B5AECEB3009226500E6BE67 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4B5AECE93009226500E6BE67 /* MTPApp */,
+				4BFE000B300D3BCF0092E367 /* MTPFileSystem */,
+				4B3E5CA4300A9D9000FF195A /* mtpd */,
+				4BDB22FF3010060D00F5A04A /* mtphelperd */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4B3E5CA3300A9D9000FF195A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4B5AECE83009226500E6BE67 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4BFE000A300D3BCF0092E367 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4B3E5CA1300A9D9000FF195A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4B5AECE63009226500E6BE67 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4BDB22FC3010060D00F5A04A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4BFE0009300D3BCF0092E367 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4B3E5CAF300A9D9000FF195A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4B3E5CA4300A9D9000FF195A /* mtpd */;
+			targetProxy = 4B3E5CAE300A9D9000FF195A /* PBXContainerItemProxy */;
+		};
+		4BDB23343010180200F5A04A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4BDB22FF3010060D00F5A04A /* mtphelperd */;
+			targetProxy = 4BDB23333010180200F5A04A /* PBXContainerItemProxy */;
+		};
+		4BFE000C300D3BCF0092E367 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4BFE000B300D3BCF0092E367 /* MTPFileSystem */;
+			targetProxy = 4BFE0002300D3BCF0092E367 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		4B3E5CB3300A9D9000FF195A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = mtpd/mtpd.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 85342F9WTR;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/Vendor/include";
+				INFOPLIST_KEY_CFBundleDisplayName = "MTP Daemon";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Vendor/lib",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-liconv";
+				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.mtpd;
+				PRODUCT_NAME = mtpd;
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "mtpd/MTPService-Bridging-Header.h";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		4B3E5CB4300A9D9000FF195A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = mtpd/mtpd.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 85342F9WTR;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/Vendor/include";
+				INFOPLIST_KEY_CFBundleDisplayName = "MTP Daemon";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Vendor/lib",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-liconv";
+				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.mtpd;
+				PRODUCT_NAME = mtpd;
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "mtpd/MTPService-Bridging-Header.h";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		4B5AECF33009226600E6BE67 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 85342F9WTR;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				EXCLUDED_ARCHS = x86_64;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.7;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		4B5AECF43009226600E6BE67 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 85342F9WTR;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				EXCLUDED_ARCHS = x86_64;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.7;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		4B5AECF63009226600E6BE67 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MTPApp/MTPFS.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 85342F9WTR;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = MTPFS;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs;
+				PRODUCT_NAME = MTPFS;
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		4B5AECF73009226600E6BE67 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MTPApp/MTPFS.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 85342F9WTR;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = MTPFS;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs;
+				PRODUCT_NAME = MTPFS;
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		4BDB23053010060D00F5A04A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = mtphelperd/mtphelperd.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
+				DEVELOPMENT_TEAM = 85342F9WTR;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "MTP Mount Helper";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.mtphelperd;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		4BDB23063010060D00F5A04A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = mtphelperd/mtphelperd.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
+				DEVELOPMENT_TEAM = 85342F9WTR;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "MTP Mount Helper";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.mtphelperd;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		4BFE000D300D3BCF0092E367 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MTPFileSystem/MTPFileSystem.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 85342F9WTR;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_DEBUG_DYLIB = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MTPFileSystem/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = mtp;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.fsext;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		4BFE000E300D3BCF0092E367 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MTPFileSystem/MTPFileSystem.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 85342F9WTR;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_DEBUG_DYLIB = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MTPFileSystem/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = mtp;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.fsext;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4B3E5CB2300A9D9000FF195A /* Build configuration list for PBXNativeTarget "mtpd" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4B3E5CB3300A9D9000FF195A /* Debug */,
+				4B3E5CB4300A9D9000FF195A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4B5AECE53009226500E6BE67 /* Build configuration list for PBXProject "FinderMTP" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4B5AECF33009226600E6BE67 /* Debug */,
+				4B5AECF43009226600E6BE67 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4B5AECF53009226600E6BE67 /* Build configuration list for PBXNativeTarget "MTPApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4B5AECF63009226600E6BE67 /* Debug */,
+				4B5AECF73009226600E6BE67 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4BDB23043010060D00F5A04A /* Build configuration list for PBXNativeTarget "mtphelperd" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4BDB23053010060D00F5A04A /* Debug */,
+				4BDB23063010060D00F5A04A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4BFE000F300D3BCF0092E367 /* Build configuration list for PBXNativeTarget "MTPFileSystem" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4BFE000D300D3BCF0092E367 /* Debug */,
+				4BFE000E300D3BCF0092E367 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4B5AECE23009226500E6BE67 /* Project object */;
+}

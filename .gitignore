@@ -1,0 +1,9 @@
+.DS_Store
+xcuserdata/
+*.xcuserstate
+
+# Legacy xcodebuild output — `xcodebuild -target X` writes here, unlike scheme builds
+# which go to DerivedData.
+build/
+
+docs/
