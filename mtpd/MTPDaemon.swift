@@ -125,9 +125,13 @@ extension MTPDaemon: MTPDeviceWatcherDelegate {
         }
     }
 
+    private static let mountMaxAttempts = 4
+    private static let mountRetryDelays: [TimeInterval] = [2.0, 5.0, 10.0]
+
     private func performMount(
         candidate: MTPCandidate,
         volumeName: String,
+        attempt: Int = 0,
         completion: ((Error?) -> Void)?
     ) {
         if let existing = MTPMountTable.mountPoint(forDeviceKey: candidate.deviceKey) {
@@ -168,8 +172,25 @@ extension MTPDaemon: MTPDeviceWatcherDelegate {
                         return
                     }
                     self.activity = .idle
-                    log.error("mount failed: \(String(describing: error), privacy: .public)")
-                    completion?(error)
+                    let next = attempt + 1
+                    if next < Self.mountMaxAttempts {
+                        let delay = Self.mountRetryDelays[min(attempt, Self.mountRetryDelays.count - 1)]
+                        log.warning(
+                            """
+                            mount failed (attempt \(next)/\(Self.mountMaxAttempts)), \
+                            retrying in \(delay)s: \(String(describing: error), privacy: .public)
+                            """
+                        )
+                        self.queue.asyncAfter(deadline: .now() + delay) {
+                            guard generation == self.generation, self.candidate?.entryID == candidate.entryID else {
+                                return
+                            }
+                            self.performMount(candidate: candidate, volumeName: volumeName, attempt: next, completion: completion)
+                        }
+                    } else {
+                        log.error("mount failed after \(Self.mountMaxAttempts) attempts: \(String(describing: error), privacy: .public)")
+                        completion?(error)
+                    }
                 }
             }
         }
