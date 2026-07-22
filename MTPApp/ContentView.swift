@@ -29,15 +29,14 @@ struct ContentView: View {
     var body: some View {
         _ContentView(
             state: wizardState,
-            error: daemon.registrationError,
             agentStatus: daemon.agentStatus,
             helperStatus: daemon.helperStatus,
             helperStepWasRequired: helperStepWasRequired
         )
         .frame(minWidth: 420, minHeight: 300)
         .onAppear {
-            daemon.registerAgent()
             daemon.registerHelperDaemon()
+            daemon.registerAgent()
             daemon.refreshStatus()
         }
         .onChange(of: wizardState) { _, newValue in
@@ -55,7 +54,6 @@ struct ContentView: View {
 private struct _ContentView: View {
 
     let state: WizardState
-    let error: String?
     let agentStatus: SMAppService.Status
     let helperStatus: SMAppService.Status
     let helperStepWasRequired: Bool
@@ -73,18 +71,12 @@ private struct _ContentView: View {
                     title: "Register background helper",
                     description: "MTPFS needs a background service to watch for connected phones and mount them automatically."
                 ) {
-                    if let error {
-                        Label(error, systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
+                    VStack(spacing: 12) {
+                        Text("Open Login Items and enable **MTPFS**.")
+                            .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
-                    } else if agentStatus == .requiresApproval {
-                        VStack(spacing: 12) {
-                            Text("Open Login Items and enable **MTPFS**.")
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                            Button("Open Login Items") {
-                                SMAppService.openSystemSettingsLoginItems()
-                            }
+                        Button("Open Login Items") {
+                            SMAppService.openSystemSettingsLoginItems()
                         }
                     }
                 }
@@ -95,18 +87,12 @@ private struct _ContentView: View {
                     title: "Register mount helper",
                     description: "MTPFS needs a privileged helper to create mount points in /Volumes."
                 ) {
-                    if let error {
-                        Label(error, systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
+                    VStack(spacing: 12) {
+                        Text("Open Login Items and enable **MTPFS**.")
+                            .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
-                    } else if helperStatus == .requiresApproval {
-                        VStack(spacing: 12) {
-                            Text("Open Login Items and enable **MTPFS**.")
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                            Button("Open Login Items") {
-                                SMAppService.openSystemSettingsLoginItems()
-                            }
+                        Button("Open Login Items") {
+                            SMAppService.openSystemSettingsLoginItems()
                         }
                     }
                 }
@@ -184,37 +170,27 @@ private struct StepView<Content: View>: View {
     }
 }
 
-#Preview("Step 1 - Requires Approval") {
-    _ContentView(state: .registerHelper, error: nil, agentStatus: .requiresApproval, helperStatus: .notRegistered, helperStepWasRequired: false)
+#Preview("Step 1 - Register Helper") {
+    _ContentView(state: .registerHelper, agentStatus: .requiresApproval, helperStatus: .notRegistered, helperStepWasRequired: false)
         .frame(width: 420, height: 300)
 }
 
-#Preview("Step 1 - Error") {
-    _ContentView(state: .registerHelper, error: "Registration failed. Check System Settings.", agentStatus: .notRegistered, helperStatus: .notRegistered, helperStepWasRequired: false)
-        .frame(width: 420, height: 300)
-}
-
-#Preview("Step 2 - Requires Approval") {
-    _ContentView(state: .registerMountHelper, error: nil, agentStatus: .enabled, helperStatus: .requiresApproval, helperStepWasRequired: true)
-        .frame(width: 420, height: 300)
-}
-
-#Preview("Step 2 - Error") {
-    _ContentView(state: .registerMountHelper, error: "Helper registration failed.", agentStatus: .enabled, helperStatus: .notRegistered, helperStepWasRequired: true)
+#Preview("Step 2 - Register Mount Helper") {
+    _ContentView(state: .registerMountHelper, agentStatus: .enabled, helperStatus: .requiresApproval, helperStepWasRequired: true)
         .frame(width: 420, height: 300)
 }
 
 #Preview("Step 3 - Enable Extension") {
-    _ContentView(state: .enableExtension, error: nil, agentStatus: .enabled, helperStatus: .enabled, helperStepWasRequired: true)
+    _ContentView(state: .enableExtension, agentStatus: .enabled, helperStatus: .enabled, helperStepWasRequired: true)
         .frame(width: 420, height: 300)
 }
 
 #Preview("Step 2 (skipped helper) - Enable Extension") {
-    _ContentView(state: .enableExtension, error: nil, agentStatus: .enabled, helperStatus: .enabled, helperStepWasRequired: false)
+    _ContentView(state: .enableExtension, agentStatus: .enabled, helperStatus: .enabled, helperStepWasRequired: false)
         .frame(width: 420, height: 300)
 }
 
 #Preview("Done") {
-    _ContentView(state: .done, error: nil, agentStatus: .enabled, helperStatus: .enabled, helperStepWasRequired: false)
+    _ContentView(state: .done, agentStatus: .enabled, helperStatus: .enabled, helperStepWasRequired: false)
         .frame(width: 420, height: 300)
 }

@@ -13,8 +13,6 @@ final class DaemonController {
     private(set) var helperRegistered = false
     private(set) var extensionEnabled = false
 
-    private(set) var registrationError: String?
-
     var agentStatus: SMAppService.Status {
         SMAppService.agent(plistName: "\(MTPDaemonLabel).plist").status
     }
@@ -49,19 +47,15 @@ final class DaemonController {
         switch service.status {
         case .enabled:
             agentRegistered = true
-            registrationError = nil
         case .requiresApproval:
             agentRegistered = false
-            registrationError = nil
         default:
             do {
                 try service.register()
                 agentRegistered = true
-                registrationError = nil
             } catch {
-                agentRegistered = false
-                registrationError = "Could not register the helper: \(error.localizedDescription)"
                 log.error("agent register failed: \(String(describing: error), privacy: .public)")
+                agentRegistered = (service.status == .enabled)
             }
         }
     }
@@ -77,19 +71,15 @@ final class DaemonController {
         switch service.status {
         case .enabled:
             helperRegistered = true
-            registrationError = nil
         case .requiresApproval:
             helperRegistered = false
-            registrationError = nil
         default:
             do {
                 try service.register()
                 helperRegistered = true
-                registrationError = nil
             } catch {
-                helperRegistered = false
-                registrationError = "Could not register the mount helper: \(error.localizedDescription)"
                 log.error("helper daemon register failed: \(String(describing: error), privacy: .public)")
+                helperRegistered = (service.status == .enabled)
             }
         }
     }
