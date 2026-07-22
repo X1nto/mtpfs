@@ -19,11 +19,6 @@
 	<key>KeepAlive</key>
 	<true/>
 
-	<key>AssociatedBundleIdentifiers</key>
-	<array>
-		<string>dev.xinto.mtpfs</string>
-	</array>
-
 	<key>ProcessType</key>
 	<string>Adaptive</string>
 </dict>
