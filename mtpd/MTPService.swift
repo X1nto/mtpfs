@@ -120,12 +120,44 @@ final class MTPService: NSObject, MTPServiceProtocol {
 
         // TODO: match on the candidate's USB serial instead of taking the first to support multiple devices.
         for index in 0..<Int(count) {
-            if let device = LIBMTP_Open_Raw_Device_Uncached(rawDevices.advanced(by: index)) {
+            if let device = openRawDeviceWithTimeout(rawDevices.advanced(by: index)) {
                 return device
             }
             log.error("openUncachedDevice: could not open raw device \(index)")
         }
         return nil
+    }
+
+    private static func openRawDeviceWithTimeout(
+        _ raw: UnsafeMutablePointer<LIBMTP_raw_device_t>,
+        timeout: TimeInterval = 10
+    ) -> UnsafeMutablePointer<LIBMTP_mtpdevice_struct>? {
+        typealias DevicePtr = UnsafeMutablePointer<LIBMTP_mtpdevice_struct>
+        struct State: @unchecked Sendable {
+            var cancelled = false
+            var device: DevicePtr?
+        }
+        let state = OSAllocatedUnfairLock(initialState: State())
+        let sem = DispatchSemaphore(value: 0)
+
+        Thread.detachNewThread {
+            let result = LIBMTP_Open_Raw_Device_Uncached(raw)
+            state.withLock { s in
+                if s.cancelled {
+                    if let d = result { LIBMTP_Release_Device(d) }
+                } else {
+                    s.device = result
+                }
+            }
+            sem.signal()
+        }
+
+        if sem.wait(timeout: .now() + timeout) == .timedOut {
+            state.withLock { $0.cancelled = true }
+            log.warning("openRawDeviceWithTimeout: timed out after \(timeout)s")
+            return nil
+        }
+        return state.withLock { $0.device }
     }
 
     private func releaseDevice() {
