@@ -1,7 +1,7 @@
 import Foundation
 import os
 
-private let log = Logger(subsystem: "dev.xinto.mtpfs.mtphelperd", category: "Helper")
+private let log = Logger(subsystem: "dev.xinto.mtpfs.mtpmounterd", category: "Helper")
 
 final class MTPMountHelperServer: NSObject, MTPMountHelperProtocol, NSXPCListenerDelegate {
 

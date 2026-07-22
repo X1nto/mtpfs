@@ -10,7 +10,7 @@
 		4B3E5CB0300A9D9000FF195A /* mtpd in Embed Daemon */ = {isa = PBXBuildFile; fileRef = 4B3E5CA5300A9D9000FF195A /* mtpd */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		4B3E5CC2300AA45800FF195A /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B3E5CC1300AA45800FF195A /* IOKit.framework */; };
 		4B3E5CC4300AA46A00FF195A /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B3E5CC3300AA46A00FF195A /* CoreFoundation.framework */; };
-		4BDB230D3010078D00F5A04A /* mtphelperd in Embed Helper */ = {isa = PBXBuildFile; fileRef = 4BDB23003010060D00F5A04A /* mtphelperd */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		4BDB230D3010078D00F5A04A /* mtpmounterd in Embed Helper */ = {isa = PBXBuildFile; fileRef = 4BDB23003010060D00F5A04A /* mtpmounterd */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		4BFE0003300D3BCF0092E367 /* MTPFileSystem.appex in Embed ExtensionKit Extensions */ = {isa = PBXBuildFile; fileRef = 4BFE0001300D3BCF0092E367 /* MTPFileSystem.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -27,7 +27,7 @@
 			containerPortal = 4B5AECE23009226500E6BE67 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 4BDB22FF3010060D00F5A04A;
-			remoteInfo = mtphelperd;
+			remoteInfo = mtpmounterd;
 		};
 		4BFE0002300D3BCF0092E367 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -86,7 +86,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 6;
 			files = (
-				4BDB230D3010078D00F5A04A /* mtphelperd in Embed Helper */,
+				4BDB230D3010078D00F5A04A /* mtpmounterd in Embed Helper */,
 			);
 			name = "Embed Helper";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -110,7 +110,7 @@
 		4B3E5CC1300AA45800FF195A /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		4B3E5CC3300AA46A00FF195A /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		4B5AECEA3009226500E6BE67 /* MTPFS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MTPFS.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		4BDB23003010060D00F5A04A /* mtphelperd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mtphelperd; sourceTree = BUILT_PRODUCTS_DIR; };
+		4BDB23003010060D00F5A04A /* mtpmounterd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mtpmounterd; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BFE0001300D3BCF0092E367 /* MTPFileSystem.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = MTPFileSystem.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -155,11 +155,11 @@
 				dev.xinto.mtpfs.mtpd.plist,
 			);
 		};
-		4BDB232F3010164C00F5A04A /* Exceptions for "mtphelperd" folder in "Copy LaunchDaemon" phase from "MTPApp" target */ = {
+		4BDB232F3010164C00F5A04A /* Exceptions for "mtpmounterd" folder in "Copy LaunchDaemon" phase from "MTPApp" target */ = {
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
 			buildPhase = 4BDB230E301007C600F5A04A /* Copy LaunchDaemon */;
 			membershipExceptions = (
-				dev.xinto.mtpfs.mtphelperd.plist,
+				dev.xinto.mtpfs.mtpmounterd.plist,
 			);
 		};
 /* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
@@ -187,12 +187,12 @@
 			path = MTPFileSystem;
 			sourceTree = "<group>";
 		};
-		4BDB23013010060D00F5A04A /* mtphelperd */ = {
+		4BDB23013010060D00F5A04A /* mtpmounterd */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				4BDB232F3010164C00F5A04A /* Exceptions for "mtphelperd" folder in "Copy LaunchDaemon" phase from "MTPApp" target */,
+				4BDB232F3010164C00F5A04A /* Exceptions for "mtpmounterd" folder in "Copy LaunchDaemon" phase from "MTPApp" target */,
 			);
-			path = mtphelperd;
+			path = mtpmounterd;
 			sourceTree = "<group>";
 		};
 		4BDB232030100C5600F5A04A /* mtpd */ = {
@@ -264,7 +264,7 @@
 				4B5AECEC3009226500E6BE67 /* MTPApp */,
 				4BD29CA3300D3BCF0092E367 /* MTPFileSystem */,
 				4B3E5CA6300A9D9000FF195A /* IPC */,
-				4BDB23013010060D00F5A04A /* mtphelperd */,
+				4BDB23013010060D00F5A04A /* mtpmounterd */,
 				4BDB232030100C5600F5A04A /* mtpd */,
 				4B3E5CB9300AA38700FF195A /* Frameworks */,
 				4BDB233D3010264F00F5A04A /* Vendor */,
@@ -278,7 +278,7 @@
 				4B5AECEA3009226500E6BE67 /* MTPFS.app */,
 				4BFE0001300D3BCF0092E367 /* MTPFileSystem.appex */,
 				4B3E5CA5300A9D9000FF195A /* mtpd */,
-				4BDB23003010060D00F5A04A /* mtphelperd */,
+				4BDB23003010060D00F5A04A /* mtpmounterd */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -335,9 +335,9 @@
 			productReference = 4B5AECEA3009226500E6BE67 /* MTPFS.app */;
 			productType = "com.apple.product-type.application";
 		};
-		4BDB22FF3010060D00F5A04A /* mtphelperd */ = {
+		4BDB22FF3010060D00F5A04A /* mtpmounterd */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 4BDB23043010060D00F5A04A /* Build configuration list for PBXNativeTarget "mtphelperd" */;
+			buildConfigurationList = 4BDB23043010060D00F5A04A /* Build configuration list for PBXNativeTarget "mtpmounterd" */;
 			buildPhases = (
 				4BDB22FC3010060D00F5A04A /* Sources */,
 				4BDB22FD3010060D00F5A04A /* Frameworks */,
@@ -349,13 +349,13 @@
 			);
 			fileSystemSynchronizedGroups = (
 				4B3E5CA6300A9D9000FF195A /* IPC */,
-				4BDB23013010060D00F5A04A /* mtphelperd */,
+				4BDB23013010060D00F5A04A /* mtpmounterd */,
 			);
-			name = mtphelperd;
+			name = mtpmounterd;
 			packageProductDependencies = (
 			);
-			productName = mtphelperd;
-			productReference = 4BDB23003010060D00F5A04A /* mtphelperd */;
+			productName = mtpmounterd;
+			productReference = 4BDB23003010060D00F5A04A /* mtpmounterd */;
 			productType = "com.apple.product-type.tool";
 		};
 		4BFE000B300D3BCF0092E367 /* MTPFileSystem */ = {
@@ -419,7 +419,7 @@
 				4B5AECE93009226500E6BE67 /* MTPApp */,
 				4BFE000B300D3BCF0092E367 /* MTPFileSystem */,
 				4B3E5CA4300A9D9000FF195A /* mtpd */,
-				4BDB22FF3010060D00F5A04A /* mtphelperd */,
+				4BDB22FF3010060D00F5A04A /* mtpmounterd */,
 			);
 		};
 /* End PBXProject section */
@@ -487,7 +487,7 @@
 		};
 		4BDB23343010180200F5A04A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 4BDB22FF3010060D00F5A04A /* mtphelperd */;
+			target = 4BDB22FF3010060D00F5A04A /* mtpmounterd */;
 			targetProxy = 4BDB23333010180200F5A04A /* PBXContainerItemProxy */;
 		};
 		4BFE000C300D3BCF0092E367 /* PBXTargetDependency */ = {
@@ -761,7 +761,7 @@
 		4BDB23053010060D00F5A04A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = mtphelperd/mtphelperd.entitlements;
+				CODE_SIGN_ENTITLEMENTS = mtpmounterd/mtpmounterd.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				DEVELOPMENT_TEAM = 85342F9WTR;
@@ -769,7 +769,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "MTP Mount Helper";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.mtphelperd;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.mtpmounterd;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -781,7 +781,7 @@
 		4BDB23063010060D00F5A04A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = mtphelperd/mtphelperd.entitlements;
+				CODE_SIGN_ENTITLEMENTS = mtpmounterd/mtpmounterd.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				DEVELOPMENT_TEAM = 85342F9WTR;
@@ -789,7 +789,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "MTP Mount Helper";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.mtphelperd;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.mtpmounterd;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -892,7 +892,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		4BDB23043010060D00F5A04A /* Build configuration list for PBXNativeTarget "mtphelperd" */ = {
+		4BDB23043010060D00F5A04A /* Build configuration list for PBXNativeTarget "mtpmounterd" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				4BDB23053010060D00F5A04A /* Debug */,

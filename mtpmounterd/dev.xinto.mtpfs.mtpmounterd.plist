@@ -3,14 +3,14 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>dev.xinto.mtpfs.mtphelperd</string>
+	<string>dev.xinto.mtpfs.mtpmounterd</string>
 
 	<key>BundleProgram</key>
-	<string>Contents/MacOS/mtphelperd</string>
+	<string>Contents/MacOS/mtpmounterd</string>
 
 	<key>MachServices</key>
 	<dict>
-		<key>85342F9WTR.dev.xinto.mtpfs.mtphelperd</key>
+		<key>85342F9WTR.dev.xinto.mtpfs.mtpmounterd</key>
 		<true/>
 	</dict>
 

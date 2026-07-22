@@ -27,11 +27,11 @@ final class DaemonController {
         let status = agentStatus
         agentRegistered = (status == .enabled)
 
-        if #available(macOS 27.0, *) {
-            helperRegistered = true
-        } else {
-            helperRegistered = (helperStatus == .enabled)
-        }
+//        if #available(macOS 27.0, *) {
+//            helperRegistered = true
+//        } else {
+        helperRegistered = (helperStatus == .enabled)
+//        }
 
         Task {
             await refreshExtensionStatus()
@@ -67,10 +67,10 @@ final class DaemonController {
     }
 
     func registerHelperDaemon() {
-        guard #unavailable(macOS 27.0) else {
-            helperRegistered = true
-            return
-        }
+//        guard #unavailable(macOS 27.0) else {
+//            helperRegistered = true
+//            return
+//        }
 
         let service = SMAppService.daemon(plistName: "\(MTPMountHelperLabel).plist")
 

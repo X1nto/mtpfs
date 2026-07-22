@@ -8,28 +8,28 @@ private let log = Logger(subsystem: "dev.xinto.mtpfs.mtpd", category: "Mounter")
 enum MTPMounter {
 
     static func mount(volumeName: String, deviceKey: String) async throws -> URL {
-        if #available(macOS 27.0, *) {
-            let url = try MTPPathMarker.create(volumeName: volumeName, deviceKey: deviceKey)
-            let resource = FSPathURLResource(url: url, writable: true)
-            let mountPath = try await FSClient.shared.mountSingleVolume(resource: resource, bundleID: MTPModuleBundleID, options: [])
-            return mountPath
-        } else {
-            let mountpoint = try await MountHelperClient.prepareMountpoint(name: volumeName)
-            let markerURL = try MTPPathMarker.create(volumeName: volumeName, deviceKey: deviceKey)
-            do {
-                try await runMount(special: markerURL.path, mountpoint: mountpoint)
-            } catch {
-                await MountHelperClient.removeMountpoint(path: mountpoint)
-                throw error
-            }
-            return URL(fileURLWithPath: mountpoint)
+//        if #available(macOS 27.0, *) {
+//            let url = try MTPPathMarker.create(volumeName: volumeName, deviceKey: deviceKey)
+//            let resource = FSPathURLResource(url: url, writable: true)
+//            let mountPath = try await FSClient.shared.mountSingleVolume(resource: resource, bundleID: MTPModuleBundleID, options: [])
+//            return mountPath
+//        } else {
+        let mountpoint = try await MountHelperClient.prepareMountpoint(name: volumeName)
+        let markerURL = try MTPPathMarker.create(volumeName: volumeName, deviceKey: deviceKey)
+        do {
+            try await runMount(special: markerURL.path, mountpoint: mountpoint)
+        } catch {
+            await MountHelperClient.removeMountpoint(path: mountpoint)
+            throw error
         }
+        return URL(fileURLWithPath: mountpoint)
+//        }
     }
 
     static func cleanupMountpoint(path: String) async {
-        if #available(macOS 27.0, *) {
-            return
-        }
+//        if #available(macOS 27.0, *) {
+//            return
+//        }
         await MountHelperClient.removeMountpoint(path: path)
     }
 
