@@ -6,6 +6,8 @@ import os
 
 private let log = Logger(subsystem: "dev.xinto.mtpfs", category: "DaemonController")
 
+private let deploymentFingerprintKey = "deploymentFingerprint"
+
 @MainActor
 @Observable
 final class DaemonController {
@@ -21,15 +23,95 @@ final class DaemonController {
         SMAppService.daemon(plistName: "\(MTPMountHelperLabel).plist").status
     }
 
-    func refreshStatus() {
-        let status = agentStatus
-        agentRegistered = (status == .enabled)
 
-//        if #available(macOS 27.0, *) {
-//            helperRegistered = true
-//        } else {
-        helperRegistered = (helperStatus == .enabled)
-//        }
+    private var isAgentRunning: Bool {
+        agentStatus == .enabled ||
+        isServiceRunning(domain: "gui/\(getuid())", label: MTPDaemonLabel)
+    }
+
+    private var isHelperRunning: Bool {
+        helperStatus == .enabled ||
+        isServiceRunning(domain: "system", label: MTPMountHelperLabel)
+    }
+    
+    private func isServiceRunning(domain: String, label: String) -> Bool {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/launchctl")
+        task.arguments = ["print", "\(domain)/\(label)"]
+        task.standardOutput = FileHandle.nullDevice
+        task.standardError = FileHandle.nullDevice
+        try? task.run()
+        task.waitUntilExit()
+        return task.terminationStatus == 0
+    }
+
+    func reconcileDeployment() async {
+        let identity = DeploymentIdentity.current()
+        let stored = UserDefaults.standard.string(forKey: deploymentFingerprintKey)
+        let storedPath = stored.map(DeploymentIdentity.bundlePath(from:))
+
+        let firstRun = (stored == nil)
+        let pathChanged = (storedPath != nil && storedPath != identity.bundlePath)
+
+        #if DEBUG
+        let shouldReconcile = true
+        let reason = "debug"
+        #else
+        let shouldReconcile = (stored != identity.fingerprint)
+        let reason = firstRun ? "first-run" : (pathChanged ? "moved" : "updated")
+        #endif
+
+        // Persist up front so a crash mid-reconcile doesn't wedge us into a retry loop.
+        UserDefaults.standard.set(identity.fingerprint, forKey: deploymentFingerprintKey)
+
+        if !shouldReconcile {
+            return
+        }
+        
+        #if DEBUG
+        log.info("reconciling deployment (\(reason, privacy: .public)) moved=\(pathChanged) path=\(identity.bundlePath, privacy: .public)")
+        #endif
+        
+        let path = identity.bundlePath
+        let bundleID = Bundle.main.bundleIdentifier ?? "dev.xinto.mtpfs"
+
+        await Task.detached(priority: .userInitiated) {
+            let removedStale = DaemonLifecycle.reconcileLaunchServices(canonicalBundlePath: path, bundleID: bundleID)
+
+            if pathChanged {
+                DaemonLifecycle.repoint(
+                    agentPlist: "\(MTPDaemonLabel).plist",
+                    daemonPlist: "\(MTPMountHelperLabel).plist"
+                )
+                DaemonLifecycle.restartFSKitAgent()
+            } else if !firstRun {
+                DaemonLifecycle.restartAgent(label: MTPDaemonLabel)
+                if removedStale {
+                    DaemonLifecycle.restartFSKitAgent()
+                }
+            }
+        }.value
+    }
+
+    func resetToFirstInstall() async {
+        log.info("developer reset: deregistering daemons")
+        UserDefaults.standard.removeObject(forKey: deploymentFingerprintKey)
+
+        await Task.detached(priority: .userInitiated) {
+            DaemonLifecycle.deregisterAll(
+                agentPlist: "\(MTPDaemonLabel).plist",
+                daemonPlist: "\(MTPMountHelperLabel).plist"
+            )
+        }.value
+
+        agentRegistered = false
+        helperRegistered = false
+        refreshStatus()
+    }
+
+    func refreshStatus() {
+        agentRegistered = isAgentRunning
+        helperRegistered = isHelperRunning
 
         Task {
             await refreshExtensionStatus()
@@ -42,6 +124,11 @@ final class DaemonController {
     }
 
     func registerAgent() {
+        guard !isAgentRunning else {
+            agentRegistered = true
+            return
+        }
+
         let service = SMAppService.agent(plistName: "\(MTPDaemonLabel).plist")
 
         switch service.status {
@@ -61,10 +148,10 @@ final class DaemonController {
     }
 
     func registerHelperDaemon() {
-//        guard #unavailable(macOS 27.0) else {
-//            helperRegistered = true
-//            return
-//        }
+        guard !isHelperRunning else {
+            helperRegistered = true
+            return
+        }
 
         let service = SMAppService.daemon(plistName: "\(MTPMountHelperLabel).plist")
 

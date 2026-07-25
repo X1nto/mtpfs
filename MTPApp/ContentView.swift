@@ -34,7 +34,8 @@ struct ContentView: View {
             helperStepWasRequired: helperStepWasRequired
         )
         .frame(minWidth: 420, minHeight: 300)
-        .onAppear {
+        .task {
+            await daemon.reconcileDeployment()
             daemon.registerHelperDaemon()
             daemon.registerAgent()
             daemon.refreshStatus()
@@ -47,6 +48,20 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             daemon.refreshStatus()
         }
+        #if DEBUG
+        .safeAreaInset(edge: .bottom) {
+            HStack {
+                Spacer()
+                Button("Reset to first-install") {
+                    Task { await daemon.resetToFirstInstall() }
+                }
+                .controlSize(.small)
+                .help("Developer only: deregister the daemons and show the setup wizard from step 1.")
+            }
+            .padding(8)
+            .background(.bar)
+        }
+        #endif
     }
 
 }
