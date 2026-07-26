@@ -125,11 +125,31 @@ public final class MTPDevice {
         )
     }
 
+    private static let detectAttempts = 5
+    private static let detectRetryInterval: TimeInterval = 0.4
+
     private static func openRaw(vendorID: Int?, productID: Int?) -> UnsafeMutablePointer<LIBMTP_mtpdevice_struct>? {
         var rawDevices: UnsafeMutablePointer<LIBMTP_raw_device_t>?
         var count: Int32 = 0
+        var status = LIBMTP_ERROR_NONE
 
-        let status = LIBMTP_Detect_Raw_Devices(&rawDevices, &count)
+        for attempt in 0..<detectAttempts {
+            status = LIBMTP_Detect_Raw_Devices(&rawDevices, &count)
+            if status == LIBMTP_ERROR_NONE, rawDevices != nil, count > 0 {
+                break
+            }
+            if status != LIBMTP_ERROR_NO_DEVICE_ATTACHED {
+                break
+            }
+            if let stale = rawDevices {
+                free(stale)
+                rawDevices = nil
+            }
+            if attempt < detectAttempts - 1 {
+                Thread.sleep(forTimeInterval: detectRetryInterval)
+            }
+        }
+
         guard status == LIBMTP_ERROR_NONE, let rawDevices, count > 0 else {
             log.error("openRaw: detect failed (status=\(status.rawValue), count=\(count))")
             return nil
