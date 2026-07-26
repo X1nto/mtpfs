@@ -27,6 +27,9 @@ protocol MTPServiceProtocol {
     func openSession(reply: @escaping (Data?, Error?) -> Void)
     func closeSession(reply: @escaping (Error?) -> Void)
 
+    /// - Parameter reply: JSON-encoded `MTPStorageInfo`
+    func refreshStorage(reply: @escaping (Data?, Error?) -> Void)
+
     /// - Parameter reply: JSON-encoded `[MTPObjectInfo]`
     func listObjects(parentID: UInt32, reply: @escaping (Data?, Error?) -> Void)
     /// - Parameter reply: JSON-encoded `MTPObjectInfo`

@@ -21,7 +21,10 @@ final class MTPItem: FSItem {
 
     private var _info: MTPObjectInfo?
     private var _snapshot: DirectorySnapshot?
+    private var _snapshotStamp: UInt64 = 0
     private var _pendingListing: Task<DirectorySnapshot, Error>?
+    
+    private static let snapshotTTL: UInt64 = 5 * NSEC_PER_SEC
 
     private var _generation: UInt64 = 0
 
@@ -62,7 +65,19 @@ final class MTPItem: FSItem {
         return .make(for: info)
     }
 
-    var snapshot: DirectorySnapshot? { stateLock.withLock { _snapshot } }
+    var snapshot: DirectorySnapshot? {
+        stateLock.withLock {
+            guard let snapshot = _snapshot else {
+                return nil
+            }
+            let age = DispatchTime.now().uptimeNanoseconds &- _snapshotStamp
+            if age >= Self.snapshotTTL {
+                _snapshot = nil
+                return nil
+            }
+            return snapshot
+        }
+    }
 
     func listingTask(orInstall make: () -> Task<DirectorySnapshot, Error>) -> (task: Task<DirectorySnapshot, Error>, generation: UInt64) {
         stateLock.lock()
@@ -93,6 +108,7 @@ final class MTPItem: FSItem {
             _pendingListing = nil
             guard _generation == generation else { return false }
             _snapshot = snapshot
+            _snapshotStamp = DispatchTime.now().uptimeNanoseconds
             return true
         }
     }

@@ -11,23 +11,26 @@ enum MountHelperClient {
             conn.remoteObjectInterface = NSXPCInterface(with: MTPMountHelperProtocol.self)
             conn.resume()
 
-            guard let proxy = conn.remoteObjectProxyWithErrorHandler({ error in
-                conn.invalidate()
-                continuation.resume(throwing: error)
-            }) as? any MTPMountHelperProtocol else {
-                conn.invalidate()
-                continuation.resume(throwing: POSIXError(.ECONNREFUSED))
+            let once = OnceGuard()
+            let finish = { result in
+                if once.claim() {
+                    conn.invalidate()
+                    continuation.resume(with: result)
+                }
+            }
+
+            guard let proxy = conn.remoteObjectProxyWithErrorHandler({ finish(.failure($0)) }) as? any MTPMountHelperProtocol else {
+                finish(.failure(POSIXError(.ECONNREFUSED)))
                 return
             }
 
             proxy.prepareMountpoint(name: name) { path, error in
-                conn.invalidate()
                 if let error {
-                    continuation.resume(throwing: error)
+                    finish(.failure(error))
                 } else if let path {
-                    continuation.resume(returning: path)
+                    finish(.success(path))
                 } else {
-                    continuation.resume(throwing: POSIXError(.EIO))
+                    finish(.failure(POSIXError(.EIO)))
                 }
             }
         }
@@ -38,18 +41,22 @@ enum MountHelperClient {
             let conn = NSXPCConnection(machServiceName: MTPMountHelperMachServiceName, options: [])
             conn.remoteObjectInterface = NSXPCInterface(with: MTPMountHelperProtocol.self)
 
-            var resumed = false
-            let resume: () -> Void = {
-                if !resumed {
-                    resumed = true
+            let once = OnceGuard()
+            let resume = {
+                if once.claim() {
                     continuation.resume()
                 }
             }
             conn.invalidationHandler = { resume() }
             conn.resume()
 
-            guard let proxy = conn.remoteObjectProxy as? any MTPMountHelperProtocol else {
+            guard let proxy = conn.remoteObjectProxyWithErrorHandler({ error in
+                log.error("removeMountpoint(\(path, privacy: .public)) connection failed: \(String(describing: error), privacy: .public)")
                 conn.invalidate()
+                resume()
+            }) as? any MTPMountHelperProtocol else {
+                conn.invalidate()
+                resume()
                 return
             }
 

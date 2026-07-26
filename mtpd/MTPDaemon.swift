@@ -4,7 +4,10 @@ import os
 private let log = Logger(subsystem: "dev.xinto.mtpfs.mtpd", category: "Daemon")
 
 private enum MTPDaemonActivity {
-    case idle, verifying, mounting, unmounting
+    case idle
+    case verifying
+    case mounting
+    case unmounting
 }
 
 final class MTPDaemon: NSObject {
@@ -14,6 +17,8 @@ final class MTPDaemon: NSObject {
     private let queue = DispatchQueue(label: "dev.xinto.mtpfs.mtpd.daemon")
 
     private var candidate: MTPCandidate?
+    private var pendingCandidates: [MTPCandidate] = []
+
     private var volumeName: String?
     private var activity: MTPDaemonActivity = .idle
 
@@ -21,9 +26,36 @@ final class MTPDaemon: NSObject {
 
     func start() {
         watcher.delegate = self
+        engine.onDeviceLost = { [weak self] in
+            self?.handleDeviceLost()
+        }
         watcher.start()
         queue.async {
             self.reclaimMountsFromPreviousLife()
+        }
+    }
+
+    private func handleDeviceLost() {
+        queue.async {
+            guard let candidate = self.candidate else {
+                return
+            }
+
+            #if DEBUG
+            log.info("\(candidate.displayName, privacy: .public) stopped responding")
+            #endif
+            
+            self.generation += 1
+            do {
+                try self.teardown(deviceKey: candidate.deviceKey, mayEscalate: true)
+            } catch {
+                log.error("could not unmount lost device: \(String(describing: error), privacy: .public)")
+            }
+            self.candidate = nil
+            self.volumeName = nil
+            self.activity = .idle
+            self.watcher.forget(candidate)
+            self.advanceToNextCandidate()
         }
     }
 
@@ -40,8 +72,29 @@ final class MTPDaemon: NSObject {
                 )
             }
             MTPPathMarker.remove(deviceKey: mount.deviceKey)
+            
             let path = mount.path
-            Task { await MTPMounter.cleanupMountpoint(path: path) }
+            Task {
+                await MTPMounter.cleanupMountpoint(path: path)
+            }
+        }
+    }
+
+    private func startVerify(candidate: MTPCandidate) {
+        self.candidate = candidate
+        self.activity = .verifying
+        
+        if candidate.initialVerifyDelay <= 0 {
+            verify(candidate: candidate)
+            return
+        }
+        
+        let generation = self.generation
+        queue.asyncAfter(deadline: .now() + candidate.initialVerifyDelay) {
+            guard generation == self.generation, self.candidate?.entryID == candidate.entryID else {
+                return
+            }
+            self.verify(candidate: candidate)
         }
     }
 }
@@ -51,51 +104,34 @@ extension MTPDaemon: MTPDeviceWatcherDelegate {
     func watcher(_ watcher: MTPDeviceWatcher, didFindCandidate candidate: MTPCandidate) {
         queue.async {
             if self.candidate != nil {
-                self.watcher.forget(candidate)
+                self.pendingCandidates.append(candidate)
                 return
             }
-            self.candidate = candidate
-            self.activity = .verifying
-            self.verify(candidate: candidate)
+            self.startVerify(candidate: candidate)
         }
     }
     
-    private static let verifyAttempts = 6
-    private static let verifyBackoffs: [TimeInterval] = [0.25, 0.5, 1.0, 1.5, 3.0]
-
-    private func verify(candidate: MTPCandidate, attempt: Int = 0) {
+    private func verify(candidate: MTPCandidate) {
         let generation = self.generation
 
-        engine.openSession { data, error in
+        engine.openSessionForDevice(vendorID: candidate.vendorID, productID: candidate.productID) { data, error in
             self.queue.async {
                 guard generation == self.generation, self.candidate?.entryID == candidate.entryID else {
                     return
                 }
 
                 if let error {
-                    let next = attempt + 1
-                    if next < Self.verifyAttempts {
-                        let delay = Self.verifyBackoffs[min(attempt, 4)]
-                        self.queue.asyncAfter(deadline: .now() + delay) {
-                            guard generation == self.generation, self.candidate?.entryID == candidate.entryID else {
-                                return
-                            }
-                            self.verify(candidate: candidate, attempt: next)
-                        }
-                        return
-                    }
-
+                    #if DEBUG
                     log.info(
                         """
-                        \(candidate.displayName, privacy: .public) did not open an MTP session after \
-                        \(Self.verifyAttempts) attempts, ignoring: \
-                        \(String(describing: error), privacy: .public)
+                        \(candidate.displayName, privacy: .public) did not open an MTP session: \(String(describing: error), privacy: .public)
                         """
                     )
-                    
+                    #endif
+
                     self.activity = .idle
                     self.candidate = nil
-                    self.watcher.forget(candidate)
+                    self.advanceToNextCandidate()
                     return
                 }
 
@@ -108,20 +144,44 @@ extension MTPDaemon: MTPDeviceWatcherDelegate {
 
     func watcher(_ watcher: MTPDeviceWatcher, didLoseCandidate candidate: MTPCandidate) {
         queue.async {
+            if let idx = self.pendingCandidates.firstIndex(where: { $0.entryID == candidate.entryID }) {
+                self.pendingCandidates.remove(at: idx)
+                
+                #if DEBUG
+                log.info("\(candidate.displayName, privacy: .public) disconnected while pending")
+                #endif
+                
+                return
+            }
+
             if self.candidate?.entryID != candidate.entryID {
                 return
             }
+
             self.generation += 1
             do {
                 try self.teardown(deviceKey: candidate.deviceKey, mayEscalate: true)
             } catch {
                 log.error("could not unmount departed device: \(String(describing: error), privacy: .public)")
             }
+            
             self.engine.forceCloseSession()
             self.candidate = nil
             self.volumeName = nil
             self.activity = .idle
-            self.watcher.rescan()
+
+            self.advanceToNextCandidate()
+        }
+    }
+
+    private func advanceToNextCandidate() {
+        if let next = pendingCandidates.first {
+            pendingCandidates.removeFirst()
+            startVerify(candidate: next)
+        } else {
+            queue.asyncAfter(deadline: .now() + 1.0) {
+                self.watcher.rescan()
+            }
         }
     }
 
@@ -134,7 +194,7 @@ extension MTPDaemon: MTPDeviceWatcherDelegate {
         attempt: Int = 0,
         completion: ((Error?) -> Void)?
     ) {
-        if let existing = MTPMountTable.mountPoint(forDeviceKey: candidate.deviceKey) {
+        if MTPMountTable.mountPoint(forDeviceKey: candidate.deviceKey) != nil {
             activity = .idle
             completion?(nil)
             return
@@ -161,8 +221,13 @@ extension MTPDaemon: MTPDeviceWatcherDelegate {
                         completion?(POSIXError(.ECANCELED))
                         return
                     }
+                    
                     self.activity = .idle
+                    
+                    #if DEBUG
                     log.info("mounted at \(mountURL.path, privacy: .public)")
+                    #endif
+                    
                     completion?(nil)
                 }
             } catch {
@@ -171,16 +236,21 @@ extension MTPDaemon: MTPDeviceWatcherDelegate {
                         completion?(POSIXError(.ECANCELED))
                         return
                     }
+                    
                     self.activity = .idle
                     let next = attempt + 1
                     if next < Self.mountMaxAttempts {
                         let delay = Self.mountRetryDelays[min(attempt, Self.mountRetryDelays.count - 1)]
+                        
+                        #if DEBUG
                         log.warning(
                             """
                             mount failed (attempt \(next)/\(Self.mountMaxAttempts)), \
                             retrying in \(delay)s: \(String(describing: error), privacy: .public)
                             """
                         )
+                        #endif
+                        
                         self.queue.asyncAfter(deadline: .now() + delay) {
                             guard generation == self.generation, self.candidate?.entryID == candidate.entryID else {
                                 return
@@ -218,6 +288,9 @@ extension MTPDaemon: MTPDeviceWatcherDelegate {
         }
 
         MTPPathMarker.remove(deviceKey: deviceKey)
-        Task { await MTPMounter.cleanupMountpoint(path: path) }
+        
+        Task {
+            await MTPMounter.cleanupMountpoint(path: path)
+        }
     }
 }

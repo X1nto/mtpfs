@@ -1,156 +1,139 @@
 import Foundation
+import os
 
-extension MTPServiceProtocol {
-    
+struct MTPServiceClient {
+    let connection: NSXPCConnection
+
     func openSession() async throws -> MTPStorageInfo {
-        try await withCheckedThrowingContinuation { continuation in
-            openSession { data, error in
-                if let error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                
-                do {
-                    continuation.resume(returning: try Self.decode(MTPStorageInfo.self, from: data))
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
+        try await perform { service, reply in
+            service.openSession(reply: reply)
         }
     }
 
     func closeSession() async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            closeSession { error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume()
-                }
-            }
+        try await perform { service, reply in
+            service.closeSession(reply: reply)
+        }
+    }
+
+    func refreshStorage() async throws -> MTPStorageInfo {
+        try await perform { service, reply in
+            service.refreshStorage(reply: reply)
         }
     }
 
     func listObjects(parentID: UInt32) async throws -> [MTPObjectInfo] {
-        try await withCheckedThrowingContinuation { continuation in
-            listObjects(parentID: parentID) { data, error in
-                if let error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                
-                do {
-                    continuation.resume(returning: try Self.decode([MTPObjectInfo].self, from: data))
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
+        try await perform { service, reply in
+            service.listObjects(parentID: parentID, reply: reply)
         }
     }
 
     func getObjectInfo(objectID: UInt32) async throws -> MTPObjectInfo {
-        try await withCheckedThrowingContinuation { continuation in
-            getObjectInfo(objectID: objectID) { data, error in
-                if let error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                
-                do {
-                    continuation.resume(returning: try Self.decode(MTPObjectInfo.self, from: data))
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
+        try await perform { service, reply in
+            service.getObjectInfo(objectID: objectID, reply: reply)
         }
     }
 
     func readFile(objectID: UInt32, offset: UInt64, length: UInt64) async throws -> Data {
-        try await withCheckedThrowingContinuation { continuation in
-            readFile(objectID: objectID, offset: offset, length: length) { data, error in
+        try await perform { service, finish in
+            service.readFile(objectID: objectID, offset: offset, length: length) { data, error in
                 if let error {
-                    continuation.resume(throwing: error)
+                    finish(.failure(error))
                 } else {
-                    continuation.resume(returning: data ?? Data())
+                    finish(.success(data ?? Data()))
                 }
             }
         }
     }
 
     func writeFile(objectID: UInt32, offset: UInt64, data: Data) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            writeFile(objectID: objectID, offset: offset, data: data) { error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume()
-                }
-            }
+        try await perform { service, reply in
+            service.writeFile(objectID: objectID, offset: offset, data: data, reply: reply)
         }
     }
 
     func truncateFile(objectID: UInt32, size: UInt64) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            truncateFile(objectID: objectID, size: size) { error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume()
-                }
-            }
+        try await perform { service, reply in
+            service.truncateFile(objectID: objectID, size: size, reply: reply)
         }
     }
 
     func createFile(parentID: UInt32, name: String, size: UInt64) async throws -> UInt32 {
-        try await withCheckedThrowingContinuation { continuation in
-            createFile(parentID: parentID, name: name, size: size) { id, error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume(returning: id)
-                }
-            }
+        try await perform { service, reply in
+            service.createFile(parentID: parentID, name: name, size: size, reply: reply)
         }
     }
 
     func createDirectory(parentID: UInt32, name: String) async throws -> UInt32 {
-        try await withCheckedThrowingContinuation { continuation in
-            createDirectory(parentID: parentID, name: name) { id, error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume(returning: id)
-                }
-            }
+        try await perform { service, reply in
+            service.createDirectory(parentID: parentID, name: name, reply: reply)
         }
     }
 
     func deleteObject(objectID: UInt32) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            deleteObject(objectID: objectID) { error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume()
-                }
-            }
+        try await perform { service, reply in
+            service.deleteObject(objectID: objectID, reply: reply)
         }
     }
 
     func renameObject(objectID: UInt32, newName: String) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            renameObject(objectID: objectID, newName: newName) { error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume()
+        try await perform { service, reply in
+            service.renameObject(objectID: objectID, newName: newName, reply: reply)
+        }
+    }
+
+    private func perform<T>(_ body: (any MTPServiceProtocol, @escaping (Result<T, any Error>) -> Void) -> Void) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            let once = OnceGuard()
+            let finish: @Sendable (Result<T, any Error>) -> Void = { result in
+                if once.claim() {
+                    continuation.resume(with: result)
                 }
+            }
+
+            let proxy = connection.remoteObjectProxyWithErrorHandler { error in
+                finish(.failure(error))
+            }
+            guard let service = proxy as? any MTPServiceProtocol else {
+                finish(.failure(POSIXError(.ECONNREFUSED)))
+                return
+            }
+
+            body(service, finish)
+        }
+    }
+
+    private func perform<T: Decodable>(_ body: (any MTPServiceProtocol, @escaping (Data?, (any Error)?) -> Void) -> Void) async throws -> T {
+        try await perform { service, finish in
+            body(service) { data, error in
+                if let error {
+                    finish(.failure(error))
+                    return
+                }
+                
+                guard let data else {
+                    finish(.failure(POSIXError(.EIO)))
+                    return
+                }
+                
+                finish(Result { try JSONDecoder().decode(T.self, from: data) })
             }
         }
     }
 
-    private static func decode<T: Decodable>(_ type: T.Type, from data: Data?) throws -> T {
-        guard let data else { throw POSIXError(.EIO) }
-        return try JSONDecoder().decode(type, from: data)
+    private func perform(_ body: (any MTPServiceProtocol, @escaping ((any Error)?) -> Void) -> Void) async throws {
+        try await perform { service, finish in
+            body(service) { error in
+                finish(error.map { .failure($0) } ?? .success(()))
+            }
+        }
+    }
+
+    private func perform<T>(_ body: (any MTPServiceProtocol, @escaping (T, (any Error)?) -> Void) -> Void) async throws -> T {
+        try await perform { service, finish in
+            body(service) { value, error in
+                finish(error.map { .failure($0) } ?? .success(value))
+            }
+        }
     }
 }

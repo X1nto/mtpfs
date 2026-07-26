@@ -7,19 +7,23 @@ private let log = Logger(subsystem: "dev.xinto.mtpfs.fsext", category: "Volume")
 class MTPVolume: FSVolume {
     private struct ServiceBinding {
         let connection: NSXPCConnection
-        let proxy: any MTPServiceProtocol
+        let client: MTPServiceClient
     }
 
     private var _binding: ServiceBinding?
     private let serviceLock = NSLock()
-    private var service: (any MTPServiceProtocol)? {
+    private var service: MTPServiceClient? {
         serviceLock.withLock {
-            _binding?.proxy
+            _binding?.client
         }
     }
     
-    private var storageInfo: MTPStorageInfo?
-    
+    private let storageLock = NSLock()
+    private var _storageInfo: MTPStorageInfo?
+    private var _storageStamp: UInt64 = 0
+    private var _storageRefreshing = false
+    private static let storageTTL: UInt64 = 3 * NSEC_PER_SEC
+
     private let root = MTPItem(objectID: MTPItem.rootObjectID)
 
     private var itemsByID: [UInt32: MTPItem] = [:]
@@ -42,17 +46,13 @@ class MTPVolume: FSVolume {
             self?.dropService()
         }
         conn.resume()
-        guard let proxy = conn.remoteObjectProxy as? any MTPServiceProtocol else {
-            conn.invalidate()
-            throw POSIXError(.ECONNREFUSED)
-        }
-        return ServiceBinding(connection: conn, proxy: proxy)
+        return ServiceBinding(connection: conn, client: MTPServiceClient(connection: conn))
     }
 
-    private func requireService() throws -> any MTPServiceProtocol {
+    private func requireService() throws -> MTPServiceClient {
         serviceLock.lock()
         defer { serviceLock.unlock() }
-        if let existing = _binding?.proxy {
+        if let existing = _binding?.client {
             return existing
         }
 
@@ -64,12 +64,15 @@ class MTPVolume: FSVolume {
             previousConnection?.invalidate()
         }
 
-        binding.proxy.openSession { _, error in
-            if let error {
+        let client = binding.client
+        Task {
+            do {
+                _ = try await client.openSession()
+            } catch {
                 log.error("reconnect openSession failed: \(String(describing: error), privacy: .public)")
             }
         }
-        return binding.proxy
+        return client
     }
 
     private func dropService() {
@@ -147,10 +150,13 @@ extension MTPVolume: FSVolume.Operations {
     }
 
     var volumeStatistics: FSStatFSResult {
+        refreshStorageIfStale()
+        let info = storageLock.withLock { _storageInfo }
+
         let stats = FSStatFSResult(fileSystemTypeName: "mtpfs")
         stats.blockSize = 4096
         stats.ioSize = 1 << 20
-        if let info = storageInfo, info.totalBytes > 0 {
+        if let info, info.totalBytes > 0 {
             stats.totalBlocks = info.totalBytes / 4096
             stats.availableBlocks = info.freeBytes / 4096
             stats.freeBlocks = info.freeBytes / 4096
@@ -164,11 +170,63 @@ extension MTPVolume: FSVolume.Operations {
         return stats
     }
 
+    private func refreshStorageIfStale() {
+        let shouldRefresh = storageLock.withLock { () -> Bool in
+            if _storageRefreshing {
+                return false
+            }
+            
+            let age = DispatchTime.now().uptimeNanoseconds &- _storageStamp
+            if _storageInfo != nil && age < Self.storageTTL {
+                return false
+            }
+            
+            _storageRefreshing = true
+            return true
+        }
+        
+        if !shouldRefresh {
+            return
+        }
+
+        Task { [weak self] in
+            guard let self else {
+                return
+            }
+            
+            defer {
+                self.storageLock.withLock {
+                    self._storageRefreshing = false
+                }
+            }
+            
+            guard let service = try? self.requireService() else {
+                return
+            }
+            
+            guard let fresh = try? await service.refreshStorage() else {
+                return
+            }
+            
+            self.storageLock.withLock {
+                self._storageInfo = fresh
+                self._storageStamp = DispatchTime.now().uptimeNanoseconds
+            }
+        }
+    }
+
+    private func setStorageInfo(_ info: MTPStorageInfo?) {
+        storageLock.withLock {
+            _storageInfo = info
+            _storageStamp = DispatchTime.now().uptimeNanoseconds
+        }
+    }
+
     func activate(options: FSTaskOptions) async throws -> FSItem {
         var binding: ServiceBinding?
         do {
             binding = try makeBinding()
-            storageInfo = try await binding!.proxy.openSession()
+            setStorageInfo(try await binding!.client.openSession())
             serviceLock.withLock { _binding = binding }
         } catch {
             log.error("activate: daemon session failed — \(String(describing: error), privacy: .public); volume will retry on first access")
@@ -183,7 +241,7 @@ extension MTPVolume: FSVolume.Operations {
             _binding = nil
             return b
         }
-        try? await binding?.proxy.closeSession()
+        try? await binding?.client.closeSession()
         binding?.connection.invalidate()
     }
 
@@ -195,15 +253,12 @@ extension MTPVolume: FSVolume.Operations {
         guard let mtpItem = item as? MTPItem, !mtpItem.isRoot else {
             return
         }
+        
         if #available(macOS 27.0, *) {
-            // On 27+ the Handler family uses reference-counted reclaim; the callback fires
-            // when the last holder releases the item.
             mtpItem.tryReclaim { [weak self] in
                 self?.forget(objectID: mtpItem.objectID)
             }
         } else {
-            // On 26, FSKit calls reclaimItem only after the item's refcount reaches zero,
-            // so we can forget it immediately.
             forget(objectID: mtpItem.objectID)
         }
     }
@@ -227,9 +282,11 @@ extension MTPVolume: FSVolume.Operations {
         guard let info = snapshot.byName[nameStr] else {
             throw POSIXError(.ENOENT)
         }
+        
         guard let result = lookupResult(for: info, in: dir) else {
             throw POSIXError(.ENOENT)
         }
+        
         return result
     }
 
@@ -239,20 +296,15 @@ extension MTPVolume: FSVolume.Operations {
         return (foundItem, itemName)
     }
 
-    func attributes(
-        _ desiredAttributes: FSItem.GetAttributesRequest,
-        of item: FSItem
-    ) async throws -> FSItem.Attributes {
+    func attributes(_ desiredAttributes: FSItem.GetAttributesRequest, of item: FSItem) async throws -> FSItem.Attributes {
         guard let mtpItem = item as? MTPItem else {
             throw POSIXError(.EIO)
         }
+        
         return mtpItem.attributes()
     }
 
-    func setAttributes(
-        _ newAttributes: FSItem.SetAttributesRequest,
-        on item: FSItem
-    ) async throws -> FSItem.Attributes {
+    func setAttributes(_ newAttributes: FSItem.SetAttributesRequest, on item: FSItem) async throws -> FSItem.Attributes {
         guard let mtpItem = item as? MTPItem else {
             throw POSIXError(.EIO)
         }
@@ -279,9 +331,11 @@ extension MTPVolume: FSVolume.Operations {
         attributes: FSItem.GetAttributesRequest?,
         packer: FSDirectoryEntryPacker
     ) async throws -> FSDirectoryVerifier {
-        guard let mtpDir = directory as? MTPItem else { throw POSIXError(.EIO) }
+        guard let mtpDir = directory as? MTPItem else {
+            throw POSIXError(.EIO)
+        }
 
-        guard service != nil else {
+        if service == nil {
             return FSDirectoryVerifier(rawValue: DirectorySnapshot(entries: []).verifier)
         }
 

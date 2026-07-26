@@ -12,6 +12,9 @@ struct MTPCandidate {
     let productID: Int
     let serial: String?
     let productName: String?
+    
+    /// Seconds to wait before the first MTP session attempt.
+    let initialVerifyDelay: TimeInterval
 
     var deviceKey: String {
         if let serial, !serial.isEmpty {
@@ -207,12 +210,15 @@ final class MTPDeviceWatcher {
         }
 
         if cls == 255 {
-            // AOSP sets iInterface = "MTP" on the MTP interface.
-            // Requiring it keeps us away from every other vendor-specific interface on the bus.
-            guard let name = interfaceName(service) else {
-                return false
+            let name = interfaceName(service)
+
+            // AOSP sets iInterface to "MTP".
+            if let name, !name.isEmpty {
+                return name.caseInsensitiveCompare("MTP") == .orderedSame
             }
-            return name.caseInsensitiveCompare("MTP") == .orderedSame
+
+            // Some vendors (like Samsung) don't set iInterface, but set subclass to 255 and protocol to 0.
+            return subclass == 255 && proto == 0
         }
 
         return false
@@ -232,12 +238,19 @@ final class MTPDeviceWatcher {
             }
         }
 
+        let cls = intProperty(service, "bInterfaceClass") ?? -1
+        let ifaceName = interfaceName(service)
+        
+        // Vendor-specific devices without an explicit "MTP" iInterface may appear on the bus before their MTP service is ready.
+        let initialVerifyDelay: TimeInterval = (cls == 255 && (ifaceName == nil || ifaceName!.isEmpty)) ? 1.5 : 0
+
         return MTPCandidate(
             entryID: entryID,
             vendorID: device != 0 ? (intProperty(device, "idVendor") ?? 0) : 0,
             productID: device != 0 ? (intProperty(device, "idProduct") ?? 0) : 0,
             serial: device != 0 ? stringProperty(device, "kUSBSerialNumberString") : nil,
-            productName: device != 0 ? stringProperty(device, "kUSBProductString") : nil
+            productName: device != 0 ? stringProperty(device, "kUSBProductString") : nil,
+            initialVerifyDelay: initialVerifyDelay
         )
     }
 
