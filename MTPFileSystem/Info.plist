@@ -36,7 +36,7 @@
 		<key>FSRequiresSecurityScopedPathURLResources</key>
 		<false/>
 		<key>FSShortName</key>
-		<string>mtpfs</string>
+		<string>$(MTP_FS_SHORTNAME)</string>
 		<key>FSSupportsBlockResources</key>
 		<false/>
 		<key>FSSupportsGenericURLResources</key>

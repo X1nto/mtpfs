@@ -153,7 +153,7 @@ extension MTPVolume: FSVolume.Operations {
         refreshStorageIfStale()
         let info = storageLock.withLock { _storageInfo }
 
-        let stats = FSStatFSResult(fileSystemTypeName: "mtpfs")
+        let stats = FSStatFSResult(fileSystemTypeName: MTPFSShortName)
         stats.blockSize = 4096
         stats.ioSize = 1 << 20
         if let info, info.totalBytes > 0 {

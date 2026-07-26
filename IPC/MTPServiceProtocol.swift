@@ -1,10 +1,5 @@
 import Foundation
 
-let MTPDaemonLabel = "dev.xinto.mtpfs.mtpd"
-let MTPMachServiceName = "85342F9WTR.dev.xinto.mtpfs.mtpd"
-let MTPClientCodeRequirement = #"anchor apple generic and certificate leaf[subject.OU] = "85342F9WTR""#
-let MTPModuleBundleID = "dev.xinto.mtpfs.fsext"
-
 struct MTPObjectInfo: Codable, Sendable {
     var objectID: UInt32
     var parentID: UInt32
@@ -36,7 +31,7 @@ protocol MTPServiceProtocol {
     func getObjectInfo(objectID: UInt32, reply: @escaping (Data?, Error?) -> Void)
     func deleteObject(objectID: UInt32, reply: @escaping (Error?) -> Void)
     func renameObject(objectID: UInt32, newName: String, reply: @escaping (Error?) -> Void)
-    
+
     /// - Parameter reply: Object ID of the newly created file
     func createFile(parentID: UInt32, name: String, size: UInt64, reply: @escaping (UInt32, Error?) -> Void)
     /// - Parameter reply: Object ID of the newly created directory

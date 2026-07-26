@@ -48,20 +48,20 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             daemon.refreshStatus()
         }
-        #if DEBUG
         .safeAreaInset(edge: .bottom) {
-            HStack {
-                Spacer()
-                Button("Reset to first-install") {
-                    Task { await daemon.resetToFirstInstall() }
+            if wizardState != .done {
+                HStack {
+                    Spacer()
+                    Button("Reset registrations…") {
+                        Task { await daemon.resetRegistrations() }
+                    }
+                    .controlSize(.small)
+                    .help("Troubleshooting: deregister the background helper and daemon, then start setup over. Use this if a step stays stuck.")
                 }
-                .controlSize(.small)
-                .help("Developer only: deregister the daemons and show the setup wizard from step 1.")
+                .padding(8)
+                .background(.bar)
             }
-            .padding(8)
-            .background(.bar)
         }
-        #endif
     }
 
 }

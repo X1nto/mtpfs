@@ -16,11 +16,11 @@ final class DaemonController {
     private(set) var extensionEnabled = false
 
     var agentStatus: SMAppService.Status {
-        SMAppService.agent(plistName: "\(MTPDaemonLabel).plist").status
+        SMAppService.agent(plistName: MTPDaemonPlistName).status
     }
 
     var helperStatus: SMAppService.Status {
-        SMAppService.daemon(plistName: "\(MTPMountHelperLabel).plist").status
+        SMAppService.daemon(plistName: MTPMountHelperPlistName).status
     }
 
 
@@ -61,7 +61,6 @@ final class DaemonController {
         let reason = firstRun ? "first-run" : (pathChanged ? "moved" : "updated")
         #endif
 
-        // Persist up front so a crash mid-reconcile doesn't wedge us into a retry loop.
         UserDefaults.standard.set(identity.fingerprint, forKey: deploymentFingerprintKey)
 
         if !shouldReconcile {
@@ -78,34 +77,32 @@ final class DaemonController {
         await Task.detached(priority: .userInitiated) {
             let removedStale = DaemonLifecycle.reconcileLaunchServices(canonicalBundlePath: path, bundleID: bundleID)
 
-            if pathChanged {
-                DaemonLifecycle.repoint(
-                    agentPlist: "\(MTPDaemonLabel).plist",
-                    daemonPlist: "\(MTPMountHelperLabel).plist"
-                )
-                DaemonLifecycle.restartFSKitAgent()
-            } else if !firstRun {
+            if !firstRun {
                 DaemonLifecycle.restartAgent(label: MTPDaemonLabel)
-                if removedStale {
-                    DaemonLifecycle.restartFSKitAgent()
-                }
+            }
+            
+            if pathChanged || removedStale {
+                DaemonLifecycle.restartFSKitAgent()
             }
         }.value
     }
 
-    func resetToFirstInstall() async {
-        log.info("developer reset: deregistering daemons")
+    func resetRegistrations() async {
+        log.info("repairing registrations: deregister → settle → re-register")
         UserDefaults.standard.removeObject(forKey: deploymentFingerprintKey)
 
         await Task.detached(priority: .userInitiated) {
             DaemonLifecycle.deregisterAll(
-                agentPlist: "\(MTPDaemonLabel).plist",
-                daemonPlist: "\(MTPMountHelperLabel).plist"
+                agentPlist: MTPDaemonPlistName,
+                daemonPlist: MTPMountHelperPlistName
             )
+            Thread.sleep(forTimeInterval: 0.8)
         }.value
 
         agentRegistered = false
         helperRegistered = false
+        registerHelperDaemon()
+        registerAgent()
         refreshStatus()
     }
 
@@ -129,7 +126,7 @@ final class DaemonController {
             return
         }
 
-        let service = SMAppService.agent(plistName: "\(MTPDaemonLabel).plist")
+        let service = SMAppService.agent(plistName: MTPDaemonPlistName)
 
         switch service.status {
         case .enabled:
@@ -153,7 +150,7 @@ final class DaemonController {
             return
         }
 
-        let service = SMAppService.daemon(plistName: "\(MTPMountHelperLabel).plist")
+        let service = SMAppService.daemon(plistName: MTPMountHelperPlistName)
 
         switch service.status {
         case .enabled:

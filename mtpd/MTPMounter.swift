@@ -111,7 +111,7 @@ enum MTPMounter {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/sbin/mount")
-            process.arguments = ["-F", "-t", "mtpfs", special, mountpoint]
+            process.arguments = ["-F", "-t", MTPFSShortName, special, mountpoint]
             let stderrPipe = Pipe()
             process.standardError = stderrPipe
             process.terminationHandler = { p in

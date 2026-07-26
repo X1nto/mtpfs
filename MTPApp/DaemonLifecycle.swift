@@ -86,29 +86,6 @@ enum DaemonLifecycle {
         run(launchctl, ["kickstart", "-k", target])
     }
 
-    static func repoint(agentPlist: String? = nil, daemonPlist: String? = nil) {
-        if let daemonPlist {
-            let svc = SMAppService.daemon(plistName: daemonPlist)
-            try? svc.unregister()
-            Thread.sleep(forTimeInterval: 0.6)
-            do {
-                try svc.register()
-            } catch {
-                log.error("daemon repoint register failed: \(String(describing: error), privacy: .public)")
-            }
-        }
-        if let agentPlist {
-            let svc = SMAppService.agent(plistName: agentPlist)
-            try? svc.unregister()
-            Thread.sleep(forTimeInterval: 0.6)
-            do {
-                try svc.register()
-            } catch {
-                log.error("agent repoint register failed: \(String(describing: error), privacy: .public)")
-            }
-        }
-    }
-
     static func restartFSKitAgent() {
         run(pkill, ["-x", "fskit_agent"])
     }

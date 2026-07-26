@@ -117,7 +117,7 @@
 		4B3E5CBB300AA38700FF195A /* libusb-1.0.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libusb-1.0.a"; path = "Vendor/lib/libusb-1.0.a"; sourceTree = "<group>"; };
 		4B3E5CC1300AA45800FF195A /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		4B3E5CC3300AA46A00FF195A /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
-		4B5AECEA3009226500E6BE67 /* MTPFS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MTPFS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4B5AECEA3009226500E6BE67 /* MTPFS Debug.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MTPFS Debug.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BCA0000000000000000A001 /* libMTPKit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libMTPKit.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BDB23003010060D00F5A04A /* mtpmounterd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mtpmounterd; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BFE0001300D3BCF0092E367 /* MTPFileSystem.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = MTPFileSystem.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -127,6 +127,7 @@
 		4B8CC9E4301627500002C695 /* Exceptions for "Utilities" folder in "MTPFileSystem" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				BundleID.swift,
 				OnceGuard.swift,
 			);
 			target = 4BFE000B300D3BCF0092E367 /* MTPFileSystem */;
@@ -134,9 +135,24 @@
 		4B8CC9E5301627500002C695 /* Exceptions for "Utilities" folder in "mtpd" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				BundleID.swift,
 				OnceGuard.swift,
 			);
 			target = 4B3E5CA4300A9D9000FF195A /* mtpd */;
+		};
+		4B8CCBE9301645F00002C695 /* Exceptions for "Utilities" folder in "MTPApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				BundleID.swift,
+			);
+			target = 4B5AECE93009226500E6BE67 /* MTPApp */;
+		};
+		4B8CCBEA301645F00002C695 /* Exceptions for "Utilities" folder in "mtpmounterd" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				BundleID.swift,
+			);
+			target = 4BDB22FF3010060D00F5A04A /* mtpmounterd */;
 		};
 		4BAA0006300B0000AAAA0001 /* Exceptions for "IPC" folder in "MTPApp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -205,8 +221,10 @@
 		4B8CC9E1301627410002C695 /* Utilities */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				4B8CCBE9301645F00002C695 /* Exceptions for "Utilities" folder in "MTPApp" target */,
 				4B8CC9E4301627500002C695 /* Exceptions for "Utilities" folder in "MTPFileSystem" target */,
 				4B8CC9E5301627500002C695 /* Exceptions for "Utilities" folder in "mtpd" target */,
+				4B8CCBEA301645F00002C695 /* Exceptions for "Utilities" folder in "mtpmounterd" target */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -334,7 +352,7 @@
 		4B5AECEB3009226500E6BE67 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				4B5AECEA3009226500E6BE67 /* MTPFS.app */,
+				4B5AECEA3009226500E6BE67 /* MTPFS Debug.app */,
 				4BFE0001300D3BCF0092E367 /* MTPFileSystem.appex */,
 				4B3E5CA5300A9D9000FF195A /* mtpd */,
 				4BDB23003010060D00F5A04A /* mtpmounterd */,
@@ -380,6 +398,7 @@
 				4BDB230C3010077D00F5A04A /* Embed Helper */,
 				4BAA0004300B0000AAAA0001 /* Copy LaunchAgent */,
 				4BDB230E301007C600F5A04A /* Copy LaunchDaemon */,
+				4BAA0100AAAA0100AAAA0100 /* Stamp launchd plists */,
 			);
 			buildRules = (
 			);
@@ -393,7 +412,7 @@
 			);
 			name = MTPApp;
 			productName = FinderMTP;
-			productReference = 4B5AECEA3009226500E6BE67 /* MTPFS.app */;
+			productReference = 4B5AECEA3009226500E6BE67 /* MTPFS Debug.app */;
 			productType = "com.apple.product-type.application";
 		};
 		4BCA0000000000000000A002 /* MTPKit */ = {
@@ -532,6 +551,24 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		4BAA0100AAAA0100AAAA0100 /* Stamp launchd plists */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Stamp launchd plists";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Stamp the embedded launchd plists so Debug and Release get distinct labels + mach\n# names, keeping them in lock-step with the runtime-derived names in IPC/*.swift.\nset -e\nPB=\"/usr/libexec/PlistBuddy\"\nCONTENTS=\"${TARGET_BUILD_DIR}/${CONTENTS_FOLDER_PATH}\"\nAPPID=\"${PRODUCT_BUNDLE_IDENTIFIER}\"\nTEAM=\"85342F9WTR\"\nstamp() {\n  plist=\"$1\"; label=\"$2\"; mach=\"$3\"\n  [ -f \"$plist\" ] || { echo \"warning: missing $plist\"; return 0; }\n  \"$PB\" -c \"Set :Label $label\" \"$plist\"\n  \"$PB\" -c \"Delete :MachServices\" \"$plist\" 2>/dev/null || true\n  \"$PB\" -c \"Add :MachServices dict\" \"$plist\"\n  \"$PB\" -c \"Add :MachServices:$mach bool true\" \"$plist\"\n}\nstamp \"${CONTENTS}/Library/LaunchAgents/dev.xinto.mtpfs.mtpd.plist\" \"${APPID}.mtpd\" \"${TEAM}.${APPID}.mtpd\"\nstamp \"${CONTENTS}/Library/LaunchDaemons/dev.xinto.mtpfs.mtpmounterd.plist\" \"${APPID}.mtpmounterd\" \"${TEAM}.${APPID}.mtpmounterd\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		4B3E5CA1300A9D9000FF195A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -600,7 +637,6 @@
 				CODE_SIGN_ENTITLEMENTS = mtpd/mtpd.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 85342F9WTR;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -613,10 +649,9 @@
 					"$(PROJECT_DIR)/Vendor/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
-				OTHER_CODE_SIGN_FLAGS = "$(inherited) --identifier dev.xinto.mtpfs.mtpd";
+				OTHER_CODE_SIGN_FLAGS = "$(inherited) --identifier $(PRODUCT_BUNDLE_IDENTIFIER)";
 				OTHER_LDFLAGS = "-liconv";
-				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.mtpd;
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.xinto.mtpfs$(MTP_BUNDLE_SUFFIX).mtpd";
 				PRODUCT_NAME = mtpd;
 				REGISTER_APP_GROUPS = YES;
 				SKIP_INSTALL = YES;
@@ -634,7 +669,6 @@
 				CODE_SIGN_ENTITLEMENTS = mtpd/mtpd.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 85342F9WTR;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -647,10 +681,9 @@
 					"$(PROJECT_DIR)/Vendor/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
-				OTHER_CODE_SIGN_FLAGS = "$(inherited) --identifier dev.xinto.mtpfs.mtpd";
+				OTHER_CODE_SIGN_FLAGS = "$(inherited) --identifier $(PRODUCT_BUNDLE_IDENTIFIER)";
 				OTHER_LDFLAGS = "-liconv";
-				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.mtpd;
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.xinto.mtpfs$(MTP_BUNDLE_SUFFIX).mtpd";
 				PRODUCT_NAME = mtpd;
 				REGISTER_APP_GROUPS = YES;
 				SKIP_INSTALL = YES;
@@ -696,11 +729,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 85342F9WTR;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				EXCLUDED_ARCHS = x86_64;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -717,13 +751,18 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.7;
+				MACOSX_DEPLOYMENT_TARGET = 26.6;
+				MARKETING_VERSION = 0.2.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
+				MTP_BUNDLE_SUFFIX = .debug;
+				MTP_FS_SHORTNAME = mtpfsdebug;
+				MTP_NAME_SUFFIX = " Debug";
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				VERSIONING_SYSTEM = "";
 			};
 			name = Debug;
 		};
@@ -761,11 +800,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 85342F9WTR;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				EXCLUDED_ARCHS = x86_64;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -776,11 +816,16 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.7;
+				MACOSX_DEPLOYMENT_TARGET = 26.6;
+				MARKETING_VERSION = 0.2.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				MTP_BUNDLE_SUFFIX = "";
+				MTP_FS_SHORTNAME = mtpfs;
+				MTP_NAME_SUFFIX = "";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				VERSIONING_SYSTEM = "";
 			};
 			name = Release;
 		};
@@ -792,13 +837,12 @@
 				CODE_SIGN_ENTITLEMENTS = MTPApp/MTPFS.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 85342F9WTR;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = MTPFS;
+				INFOPLIST_KEY_CFBundleDisplayName = "MTPFS$(MTP_NAME_SUFFIX)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -806,9 +850,8 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs;
-				PRODUCT_NAME = MTPFS;
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.xinto.mtpfs$(MTP_BUNDLE_SUFFIX)";
+				PRODUCT_NAME = "MTPFS$(MTP_NAME_SUFFIX)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -827,13 +870,12 @@
 				CODE_SIGN_ENTITLEMENTS = MTPApp/MTPFS.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 85342F9WTR;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = MTPFS;
+				INFOPLIST_KEY_CFBundleDisplayName = "MTPFS$(MTP_NAME_SUFFIX)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -841,9 +883,8 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.1.1;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs;
-				PRODUCT_NAME = MTPFS;
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.xinto.mtpfs$(MTP_BUNDLE_SUFFIX)";
+				PRODUCT_NAME = "MTPFS$(MTP_NAME_SUFFIX)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -895,8 +936,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "MTP Mount Helper";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				OTHER_CODE_SIGN_FLAGS = "$(inherited) --identifier dev.xinto.mtpfs.mtpmounterd";
-				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.mtpmounterd;
+				OTHER_CODE_SIGN_FLAGS = "$(inherited) --identifier $(PRODUCT_BUNDLE_IDENTIFIER)";
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.xinto.mtpfs$(MTP_BUNDLE_SUFFIX).mtpmounterd";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -916,8 +957,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "MTP Mount Helper";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				OTHER_CODE_SIGN_FLAGS = "$(inherited) --identifier dev.xinto.mtpfs.mtpmounterd";
-				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.mtpmounterd;
+				OTHER_CODE_SIGN_FLAGS = "$(inherited) --identifier $(PRODUCT_BUNDLE_IDENTIFIER)";
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.xinto.mtpfs$(MTP_BUNDLE_SUFFIX).mtpmounterd";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -931,14 +972,13 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = MTPFileSystem/MTPFileSystem.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 85342F9WTR;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_DEBUG_DYLIB = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MTPFileSystem/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = mtp;
+				INFOPLIST_KEY_CFBundleDisplayName = "mtp$(MTP_NAME_SUFFIX)";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -946,8 +986,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.fsext;
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.xinto.mtpfs$(MTP_BUNDLE_SUFFIX).fsext";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -963,14 +1002,13 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = MTPFileSystem/MTPFileSystem.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 85342F9WTR;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_DEBUG_DYLIB = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MTPFileSystem/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = mtp;
+				INFOPLIST_KEY_CFBundleDisplayName = "mtp$(MTP_NAME_SUFFIX)";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -978,8 +1016,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.fsext;
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.xinto.mtpfs$(MTP_BUNDLE_SUFFIX).fsext";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
