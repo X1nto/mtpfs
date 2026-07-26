@@ -1,0 +1,4 @@
+module CLibMTP {
+    header "libmtp.h"
+    export *
+}

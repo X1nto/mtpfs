@@ -12,6 +12,7 @@
 		4B3E5CC4300AA46A00FF195A /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B3E5CC3300AA46A00FF195A /* CoreFoundation.framework */; };
 		4BDB230D3010078D00F5A04A /* mtpmounterd in Embed Helper */ = {isa = PBXBuildFile; fileRef = 4BDB23003010060D00F5A04A /* mtpmounterd */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		4BFE0003300D3BCF0092E367 /* MTPFileSystem.appex in Embed ExtensionKit Extensions */ = {isa = PBXBuildFile; fileRef = 4BFE0001300D3BCF0092E367 /* MTPFileSystem.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		4BCA0000000000000000A00B /* libMTPKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4BCA0000000000000000A001 /* libMTPKit.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,6 +36,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 4BFE000B300D3BCF0092E367;
 			remoteInfo = MTPFSPathURLBackend;
+		};
+		4BCA0000000000000000A00A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4B5AECE23009226500E6BE67 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4BCA0000000000000000A002;
+			remoteInfo = MTPKit;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -112,6 +120,7 @@
 		4B5AECEA3009226500E6BE67 /* MTPFS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MTPFS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BDB23003010060D00F5A04A /* mtpmounterd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mtpmounterd; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BFE0001300D3BCF0092E367 /* MTPFileSystem.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = MTPFileSystem.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		4BCA0000000000000000A001 /* libMTPKit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libMTPKit.a; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -211,6 +220,11 @@
 			path = Vendor;
 			sourceTree = "<group>";
 		};
+		4BCA0000000000000000A008 /* MTPKit */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MTPKit;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -218,8 +232,16 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4BCA0000000000000000A00B /* libMTPKit.a in Frameworks */,
 				4B3E5CC4300AA46A00FF195A /* CoreFoundation.framework in Frameworks */,
 				4B3E5CC2300AA45800FF195A /* IOKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4BCA0000000000000000A004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -264,6 +286,7 @@
 				4B5AECEC3009226500E6BE67 /* MTPApp */,
 				4BD29CA3300D3BCF0092E367 /* MTPFileSystem */,
 				4B3E5CA6300A9D9000FF195A /* IPC */,
+				4BCA0000000000000000A008 /* MTPKit */,
 				4BDB23013010060D00F5A04A /* mtpmounterd */,
 				4BDB232030100C5600F5A04A /* mtpd */,
 				4B3E5CB9300AA38700FF195A /* Frameworks */,
@@ -279,6 +302,7 @@
 				4BFE0001300D3BCF0092E367 /* MTPFileSystem.appex */,
 				4B3E5CA5300A9D9000FF195A /* mtpd */,
 				4BDB23003010060D00F5A04A /* mtpmounterd */,
+				4BCA0000000000000000A001 /* libMTPKit.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -297,6 +321,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				4BCA0000000000000000A009 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				4B3E5CA6300A9D9000FF195A /* IPC */,
@@ -306,6 +331,25 @@
 			productName = mtpd;
 			productReference = 4B3E5CA5300A9D9000FF195A /* mtpd */;
 			productType = "com.apple.product-type.tool";
+		};
+		4BCA0000000000000000A002 /* MTPKit */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4BCA0000000000000000A005 /* Build configuration list for PBXNativeTarget "MTPKit" */;
+			buildPhases = (
+				4BCA0000000000000000A003 /* Sources */,
+				4BCA0000000000000000A004 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				4BCA0000000000000000A008 /* MTPKit */,
+			);
+			name = MTPKit;
+			productName = MTPKit;
+			productReference = 4BCA0000000000000000A001 /* libMTPKit.a */;
+			productType = "com.apple.product-type.library.static";
 		};
 		4B5AECE93009226500E6BE67 /* MTPApp */ = {
 			isa = PBXNativeTarget;
@@ -391,6 +435,9 @@
 					4B3E5CA4300A9D9000FF195A = {
 						CreatedOnToolsVersion = 27.0;
 					};
+					4BCA0000000000000000A002 = {
+						CreatedOnToolsVersion = 27.0;
+					};
 					4B5AECE93009226500E6BE67 = {
 						CreatedOnToolsVersion = 26.3;
 					};
@@ -420,6 +467,7 @@
 				4BFE000B300D3BCF0092E367 /* MTPFileSystem */,
 				4B3E5CA4300A9D9000FF195A /* mtpd */,
 				4BDB22FF3010060D00F5A04A /* mtpmounterd */,
+				4BCA0000000000000000A002 /* MTPKit */,
 			);
 		};
 /* End PBXProject section */
@@ -477,6 +525,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4BCA0000000000000000A003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -494,6 +549,11 @@
 			isa = PBXTargetDependency;
 			target = 4BFE000B300D3BCF0092E367 /* MTPFileSystem */;
 			targetProxy = 4BFE0002300D3BCF0092E367 /* PBXContainerItemProxy */;
+		};
+		4BCA0000000000000000A009 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4BCA0000000000000000A002 /* MTPKit */;
+			targetProxy = 4BCA0000000000000000A00A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -518,6 +578,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
+				OTHER_CODE_SIGN_FLAGS = "$(inherited) --identifier dev.xinto.mtpfs.mtpd";
 				OTHER_LDFLAGS = "-liconv";
 				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.mtpd;
 				PRODUCT_NAME = mtpd;
@@ -526,7 +587,6 @@
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "mtpd/MTPService-Bridging-Header.h";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -552,6 +612,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
+				OTHER_CODE_SIGN_FLAGS = "$(inherited) --identifier dev.xinto.mtpfs.mtpd";
 				OTHER_LDFLAGS = "-liconv";
 				PRODUCT_BUNDLE_IDENTIFIER = dev.xinto.mtpfs.mtpd;
 				PRODUCT_NAME = mtpd;
@@ -560,7 +621,6 @@
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "mtpd/MTPService-Bridging-Header.h";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -862,6 +922,36 @@
 			};
 			name = Release;
 		};
+		4BCA0000000000000000A006 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEVELOPMENT_TEAM = 85342F9WTR;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/Vendor/include";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/Vendor/include";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		4BCA0000000000000000A007 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEVELOPMENT_TEAM = 85342F9WTR;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/Vendor/include";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/Vendor/include";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -906,6 +996,15 @@
 			buildConfigurations = (
 				4BFE000D300D3BCF0092E367 /* Debug */,
 				4BFE000E300D3BCF0092E367 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4BCA0000000000000000A005 /* Build configuration list for PBXNativeTarget "MTPKit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4BCA0000000000000000A006 /* Debug */,
+				4BCA0000000000000000A007 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
