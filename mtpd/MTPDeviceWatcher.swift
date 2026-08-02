@@ -183,7 +183,10 @@ final class MTPDeviceWatcher {
     private func handleRemoved(_ iter: io_iterator_t) {
         var service = IOIteratorNext(iter)
         while service != 0 {
-            defer { IOObjectRelease(service); service = IOIteratorNext(iter) }
+            defer {
+                IOObjectRelease(service)
+                service = IOIteratorNext(iter)
+            }
             var entryID: UInt64 = 0
             if IORegistryEntryGetRegistryEntryID(service, &entryID) != KERN_SUCCESS {
                 continue
