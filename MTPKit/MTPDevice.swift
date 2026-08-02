@@ -12,7 +12,7 @@ public final class MTPDevice {
 
     private static let initToken: Void = { LIBMTP_Init() }()
 
-    private static let padBlockSize = 64 * 1024
+    static let rootParent: UInt32 = 0xFFFFFFFF
 
     private var handle: UnsafeMutablePointer<LIBMTP_mtpdevice_struct>?
 
@@ -60,7 +60,8 @@ public final class MTPDevice {
             let capabilities = MTPCapabilities(
                 rangedRead: LIBMTP_Check_Capability(handle, LIBMTP_DEVICECAP_GetPartialObject) != 0,
                 editObjects: LIBMTP_Check_Capability(handle, LIBMTP_DEVICECAP_SendPartialObject) != 0
-                    && LIBMTP_Check_Capability(handle, LIBMTP_DEVICECAP_EditObjects) != 0
+                    && LIBMTP_Check_Capability(handle, LIBMTP_DEVICECAP_EditObjects) != 0,
+                moveObject: LIBMTP_Check_Capability(handle, LIBMTP_DEVICECAP_MoveObject) != 0
             )
 
             let storage = handle.pointee.storage.map { makeStorage(from: $0) }
@@ -74,11 +75,11 @@ public final class MTPDevice {
             guard let handle = self.handle else {
                 return .gone(.deviceNotFound)
             }
-            
+
             flushEdit()
 
             LIBMTP_Clear_Errorstack(handle)
-            
+
             // Sorting would reorder the storage list between calls.
             if LIBMTP_Get_Storage(handle, Int32(LIBMTP_STORAGE_SORTBY_NOTSORTED)) >= 0,
                let storagePtr = handle.pointee.storage
@@ -200,11 +201,11 @@ public final class MTPDevice {
             if count < 0 {
                 throw fail(handle, "listChildren(parent=\(parentID))")
             }
-            
+
             guard count != 0, let handles else {
                 return []
             }
-            
+
             defer {
                 free(handles)
             }
@@ -234,17 +235,17 @@ public final class MTPDevice {
             guard let handle = self.handle else {
                 throw MTPError.deviceNotFound
             }
-            
+
             flushEdit()
-            
+
             guard let file = LIBMTP_Get_Filemetadata(handle, objectID) else {
                 throw MTPError.objectNotFound
             }
-            
+
             defer {
                 LIBMTP_destroy_file_t(file)
             }
-            
+
             return Self.object(from: file)
         }
     }
@@ -254,7 +255,7 @@ public final class MTPDevice {
             guard let handle = self.handle else {
                 throw MTPError.deviceNotFound
             }
-            
+
             flushEdit()
 
             var accumulated = Data()
@@ -265,21 +266,21 @@ public final class MTPDevice {
             while remaining > 0 {
                 var raw: UnsafeMutablePointer<UInt8>?
                 var got: UInt32 = 0
-                
+
                 LIBMTP_Clear_Errorstack(handle)
-                
+
                 let ret = LIBMTP_GetPartialObject(handle, objectID, cursor, UInt32(clamping: remaining), &raw, &got)
                 if ret != 0 {
                     throw fail(handle, "GetPartialObject(obj=\(objectID), off=\(cursor))")
                 }
-                
+
                 guard let raw, got > 0 else {
                     if let raw {
                         free(raw)
                     }
                     break
                 }
-                
+
                 accumulated.append(raw, count: Int(got))
                 free(raw)
                 cursor += UInt64(got)
@@ -295,15 +296,15 @@ public final class MTPDevice {
             guard let handle = self.handle else {
                 throw MTPError.deviceNotFound
             }
-            
+
             flushEdit()
 
             LIBMTP_Clear_Errorstack(handle)
-            
+
             let outcome = withoutActuallyEscaping(sink) { escapableSink -> (result: Int32, aborted: Bool) in
                 let context = StreamContext(sink: escapableSink)
                 let boxed = Unmanaged.passRetained(context)
-                
+
                 defer {
                     boxed.release()
                 }
@@ -315,7 +316,7 @@ public final class MTPDevice {
                             putlen?.pointee = 0
                             return UInt16(LIBMTP_HANDLER_RETURN_OK)
                         }
-                        
+
                         let context = Unmanaged<StreamContext>.fromOpaque(priv).takeUnretainedValue()
                         let accepted = context.sink(UnsafeRawBufferPointer(start: bytes, count: Int(sendlen)))
                         if !accepted {
@@ -323,7 +324,7 @@ public final class MTPDevice {
                             putlen?.pointee = 0
                             return UInt16(LIBMTP_HANDLER_RETURN_CANCEL)
                         }
-                        
+
                         putlen?.pointee = sendlen
                         return UInt16(LIBMTP_HANDLER_RETURN_OK)
                     },
@@ -347,7 +348,7 @@ public final class MTPDevice {
             guard let handle = self.handle else {
                 throw MTPError.deviceNotFound
             }
-            
+
             if !capabilities.editObjects {
                 throw MTPError.operationUnsupported
             }
@@ -361,12 +362,12 @@ public final class MTPDevice {
             }
 
             LIBMTP_Clear_Errorstack(handle)
-            
+
             let ret = data.withUnsafeBytes { raw -> Int32 in
                 guard let base = raw.baseAddress else {
                     return -1
                 }
-                
+
                 return LIBMTP_SendPartialObject(
                     handle, objectID, offset,
                     UnsafeMutablePointer(mutating: base.assumingMemoryBound(to: UInt8.self)),
@@ -391,7 +392,7 @@ public final class MTPDevice {
             guard let handle = self.handle else {
                 throw MTPError.deviceNotFound
             }
-            
+
             guard capabilities.editObjects else {
                 throw MTPError.operationUnsupported
             }
@@ -401,11 +402,11 @@ public final class MTPDevice {
             LIBMTP_Clear_Errorstack(handle)
             if LIBMTP_TruncateObject(handle, objectID, size) != 0 {
                 let error = fail(handle, "TruncateObject(obj=\(objectID), size=\(size))")
-                
+
                 if self.handle != nil {
                     flushEdit()
                 }
-                
+
                 throw error
             }
 
@@ -419,13 +420,13 @@ public final class MTPDevice {
             guard let handle = self.handle else {
                 throw MTPError.deviceNotFound
             }
-            
+
             flushEdit()
 
             guard let file = LIBMTP_new_file_t() else {
                 throw MTPError.outOfMemory
             }
-            
+
             file.pointee.parent_id = parentID
             file.pointee.storage_id = storageID
             file.pointee.filesize = 0
@@ -456,13 +457,13 @@ public final class MTPDevice {
             guard let handle = self.handle else {
                 throw MTPError.deviceNotFound
             }
-            
+
             flushEdit()
 
             guard let scratch = name.withCString({ strdup($0) }) else {
                 throw MTPError.outOfMemory
             }
-            
+
             defer {
                 free(scratch)
             }
@@ -505,24 +506,48 @@ public final class MTPDevice {
         }
     }
 
+    public func move(objectID: UInt32, toParent parentID: UInt32) throws {
+        try Self.queue.sync {
+            guard let handle = self.handle else {
+                throw MTPError.deviceNotFound
+            }
+
+            guard capabilities.moveObject else {
+                throw MTPError.operationUnsupported
+            }
+
+            try consumePendingFailure(for: objectID)
+            flushEdit(touching: objectID)
+
+            // MTP uses 0 for MoveObject and CopyObject (as opposed to 0xFFFFFFFF for everything else). Stupid.
+            let moveParent = parentID == Self.rootParent ? 0 : parentID
+
+            LIBMTP_Clear_Errorstack(handle)
+
+            if LIBMTP_Move_Object(handle, objectID, storageID, moveParent) != 0 {
+                throw fail(handle, "Move_Object(\(objectID) -> parent \(moveParent))")
+            }
+        }
+    }
+
     private func beginEditing(_ objectID: UInt32, handle: UnsafeMutablePointer<LIBMTP_mtpdevice_struct>) throws {
         if editingObjectID == objectID {
             return
         }
-        
+
         flushEdit()
 
         LIBMTP_Clear_Errorstack(handle)
-        
+
         if LIBMTP_BeginEditObject(handle, objectID) != 0 {
             let first = fail(handle, "BeginEditObject(\(objectID))")
 
-//            if self.handle == nil {
-//                throw first
-//            }
+            if self.handle == nil {
+                throw first
+            }
 
             _ = LIBMTP_EndEditObject(handle, objectID)
-            
+
             LIBMTP_Clear_Errorstack(handle)
 
             if LIBMTP_BeginEditObject(handle, objectID) != 0 {
@@ -542,25 +567,25 @@ public final class MTPDevice {
         if offset <= editingSize {
             return
         }
-        
+
         let gapStart = editingSize
 
         LIBMTP_Clear_Errorstack(handle)
-        
+
         if LIBMTP_TruncateObject(handle, objectID, offset) != 0 {
             throw fail(handle, "growEdit: TruncateObject(obj=\(objectID), size=\(offset))")
         }
 
-        var zeros = [UInt8](repeating: 0, count: Self.padBlockSize)
+        var zeros = [UInt8](repeating: 0, count: 64 * 1024)
         var cursor = gapStart
         while cursor < offset {
-            let chunk = Int(min(UInt64(Self.padBlockSize), offset - cursor))
+            let chunk = Int(min(UInt64(64 * 1024), offset - cursor))
             LIBMTP_Clear_Errorstack(handle)
             let sent = zeros.withUnsafeMutableBufferPointer { buffer -> Int32 in
                 guard let base = buffer.baseAddress else {
                     return -1
                 }
-                
+
                 return LIBMTP_SendPartialObject(handle, objectID, cursor, base, UInt32(chunk))
             }
             if sent != 0 {
@@ -574,13 +599,13 @@ public final class MTPDevice {
     private func flushEdit() {
         editFlush?.cancel()
         editFlush = nil
-        
+
         guard let objectID = editingObjectID else {
             return
         }
-        
+
         editingObjectID = nil
-        
+
         guard let handle else {
             return
         }
@@ -589,6 +614,15 @@ public final class MTPDevice {
             log.error("EndEditObject(\(objectID)) failed")
             LIBMTP_Clear_Errorstack(handle)
         }
+    }
+
+    private func flushEdit(touching objectID: UInt32) {
+        if editingObjectID == objectID {
+            flushEdit()
+        }
+    }
+
+    private func consumePendingFailure(for objectID: UInt32) throws {
     }
 
     private func abandonEdit() {
@@ -627,11 +661,11 @@ public final class MTPDevice {
         guard let file = LIBMTP_Get_Filemetadata(handle, objectID) else {
             return nil
         }
-        
+
         defer {
             LIBMTP_destroy_file_t(file)
         }
-        
+
         return file.pointee.filesize
     }
 
@@ -652,7 +686,7 @@ public final class MTPDevice {
 private final class StreamContext {
     let sink: MTPDevice.ChunkSink
     var aborted = false
-    
+
     init(sink: @escaping MTPDevice.ChunkSink) {
         self.sink = sink
     }

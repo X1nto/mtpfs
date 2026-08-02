@@ -5,6 +5,9 @@ import os
 private let log = Logger(subsystem: "dev.xinto.mtpfs.fsext", category: "Volume")
 
 class MTPVolume: FSVolume {
+
+    // MARK: - XPC Service
+
     private struct ServiceBinding {
         let connection: NSXPCConnection
         let client: MTPServiceClient
@@ -17,17 +20,21 @@ class MTPVolume: FSVolume {
             _binding?.client
         }
     }
-    
+
+    // MARK: - Storage Info
+
+    private static let storageTTL: UInt64 = 3 * NSEC_PER_SEC
     private let storageLock = NSLock()
     private var _storageInfo: MTPStorageInfo?
     private var _storageStamp: UInt64 = 0
     private var _storageRefreshing = false
-    private static let storageTTL: UInt64 = 3 * NSEC_PER_SEC
 
+    // MARK: - Item Cache
+
+    private let identity = MTPIdentityTable()
     private let root = MTPItem(objectID: MTPItem.rootObjectID)
-
-    private var itemsByID: [UInt32: MTPItem] = [:]
     private let itemsLock = NSLock()
+    private var itemsByID: [UInt32: MTPItem] = [:]
 
     init(
         volumeName: String = "MTP Device",
@@ -35,6 +42,8 @@ class MTPVolume: FSVolume {
     ) {
         super.init(volumeID: volumeID, volumeName: FSFileName(string: volumeName))
     }
+
+    // MARK: - Service Management
 
     private func makeBinding() throws -> ServiceBinding {
         let conn = NSXPCConnection(machServiceName: MTPMachServiceName, options: [])
@@ -50,29 +59,29 @@ class MTPVolume: FSVolume {
     }
 
     private func requireService() throws -> MTPServiceClient {
-        serviceLock.lock()
-        defer { serviceLock.unlock() }
-        if let existing = _binding?.client {
-            return existing
-        }
-
-        let binding = try makeBinding()
-
-        let previousConnection = _binding?.connection
-        _binding = binding
-        DispatchQueue.global(qos: .utility).async {
-            previousConnection?.invalidate()
-        }
-
-        let client = binding.client
-        Task {
-            do {
-                _ = try await client.openSession()
-            } catch {
-                log.error("reconnect openSession failed: \(String(describing: error), privacy: .public)")
+        try serviceLock.withLock {
+            if let existing = _binding?.client {
+                return existing
             }
+
+            let binding = try makeBinding()
+
+            let previousConnection = _binding?.connection
+            _binding = binding
+            DispatchQueue.global(qos: .utility).async {
+                previousConnection?.invalidate()
+            }
+
+            let client = binding.client
+            Task {
+                do {
+                    _ = try await client.openSession()
+                } catch {
+                    log.error("reconnect openSession failed: \(String(describing: error), privacy: .public)")
+                }
+            }
+            return client
         }
-        return client
     }
 
     private func dropService() {
@@ -81,23 +90,34 @@ class MTPVolume: FSVolume {
         }
     }
 
+    // MARK: - Item Management
+
     private func item(for info: MTPObjectInfo, parent: UInt32) -> MTPItem {
-        itemsLock.lock()
-        defer { itemsLock.unlock() }
-        if let existing = itemsByID[info.objectID] {
-            existing.info = info
-            return existing
+        itemsLock.withLock {
+            if let existing = itemsByID[info.objectID] {
+                existing.info = info
+                return existing
+            }
+            let created = MTPItem(objectID: info.objectID, parentObjectID: parent, info: info)
+            itemsByID[info.objectID] = created
+            return created
         }
-        let created = MTPItem(objectID: info.objectID, parentObjectID: parent, info: info)
-        itemsByID[info.objectID] = created
-        return created
+    }
+
+    private func rekeyItem(from oldObjectID: UInt32, to newObjectID: UInt32, item: MTPItem) {
+        itemsLock.withLock {
+            itemsByID[oldObjectID] = nil
+            itemsByID[newObjectID] = item
+        }
     }
 
     private func forget(objectID: UInt32) {
-        itemsLock.lock()
-        defer { itemsLock.unlock() }
-        itemsByID[objectID] = nil
+        itemsLock.withLock {
+            itemsByID[objectID] = nil
+        }
     }
+
+    // MARK: - Directory Listing
 
     private func listing(for directory: MTPItem) async throws -> DirectorySnapshot {
         if let snapshot = directory.snapshot {
@@ -122,7 +142,7 @@ class MTPVolume: FSVolume {
             directory.publish(snapshot, ifGeneration: generation)
             return snapshot
         } catch {
-            directory.clearPendingListing(ifGeneration: generation)
+            directory.clearPendingListing()
             throw error
         }
     }
@@ -142,10 +162,18 @@ extension MTPVolume: FSVolume.Operations {
         capabilities.supportsHardLinks = false
         capabilities.supportsSymbolicLinks = false
         capabilities.supportsPersistentObjectIDs = false
-        capabilities.doesNotSupportVolumeSizes = false
-        capabilities.supportsHiddenFiles = true
         capabilities.supports64BitObjectIDs = true
+
+        //TODO: figure this out
+        capabilities.supportsHiddenFiles = false
+
+        capabilities.doesNotSupportVolumeSizes = false
+        capabilities.doesNotSupportImmutableFiles = true
+        capabilities.doesNotSupportSettingFilePermissions = true
+        capabilities.doesNotSupportRootTimes = true
+
         capabilities.caseFormat = .insensitiveCasePreserving
+
         return capabilities
     }
 
@@ -175,16 +203,16 @@ extension MTPVolume: FSVolume.Operations {
             if _storageRefreshing {
                 return false
             }
-            
+
             let age = DispatchTime.now().uptimeNanoseconds &- _storageStamp
             if _storageInfo != nil && age < Self.storageTTL {
                 return false
             }
-            
+
             _storageRefreshing = true
             return true
         }
-        
+
         if !shouldRefresh {
             return
         }
@@ -193,21 +221,21 @@ extension MTPVolume: FSVolume.Operations {
             guard let self else {
                 return
             }
-            
+
             defer {
                 self.storageLock.withLock {
                     self._storageRefreshing = false
                 }
             }
-            
+
             guard let service = try? self.requireService() else {
                 return
             }
-            
+
             guard let fresh = try? await service.refreshStorage() else {
                 return
             }
-            
+
             self.storageLock.withLock {
                 self._storageInfo = fresh
                 self._storageStamp = DispatchTime.now().uptimeNanoseconds
@@ -253,7 +281,7 @@ extension MTPVolume: FSVolume.Operations {
         guard let mtpItem = item as? MTPItem, !mtpItem.isRoot else {
             return
         }
-        
+
         if #available(macOS 27.0, *) {
             mtpItem.tryReclaim { [weak self] in
                 self?.forget(objectID: mtpItem.objectID)
@@ -282,11 +310,11 @@ extension MTPVolume: FSVolume.Operations {
         guard let info = snapshot.byName[nameStr] else {
             throw POSIXError(.ENOENT)
         }
-        
+
         guard let result = lookupResult(for: info, in: dir) else {
             throw POSIXError(.ENOENT)
         }
-        
+
         return result
     }
 
@@ -300,18 +328,18 @@ extension MTPVolume: FSVolume.Operations {
         guard let mtpItem = item as? MTPItem else {
             throw POSIXError(.EIO)
         }
-        
-        return mtpItem.attributes()
+
+        return mtpItem.attributes(identity: identity)
     }
 
     func setAttributes(_ newAttributes: FSItem.SetAttributesRequest, on item: FSItem) async throws -> FSItem.Attributes {
         guard let mtpItem = item as? MTPItem else {
             throw POSIXError(.EIO)
         }
-        
+
         guard newAttributes.isValid(.size), !mtpItem.isDirectory else {
             newAttributes.consumedAttributes = []
-            return mtpItem.attributes()
+            return mtpItem.attributes(identity: identity)
         }
 
         let size = newAttributes.size
@@ -321,7 +349,7 @@ extension MTPVolume: FSVolume.Operations {
             info.modificationDate = Date()
         }
         newAttributes.consumedAttributes = [.size]
-        return mtpItem.attributes()
+        return mtpItem.attributes(identity: identity)
     }
 
     func enumerateDirectory(
@@ -335,14 +363,9 @@ extension MTPVolume: FSVolume.Operations {
             throw POSIXError(.EIO)
         }
 
-        if service == nil {
-            return FSDirectoryVerifier(rawValue: DirectorySnapshot(entries: []).verifier)
-        }
-
         do {
             let snapshot: DirectorySnapshot
             if cookie == .initial {
-                mtpDir.invalidateListing()
                 snapshot = try await listing(for: mtpDir)
             } else {
                 guard let pinned = mtpDir.snapshot, verifier.rawValue == 0 || verifier.rawValue == pinned.verifier else {
@@ -365,8 +388,8 @@ extension MTPVolume: FSVolume.Operations {
                         name: FSFileName(string: isSelf ? "." : ".."),
                         itemType: .directory,
                         itemID: isSelf
-                            ? MTPItem.identifier(for: mtpDir.objectID)
-                            : (mtpDir.isRoot ? .rootDirectory : MTPItem.identifier(for: mtpDir.parentObjectID)),
+                            ? self.identity.identifier(for: mtpDir.objectID)
+                            : self.identity.parentIdentifier(for: mtpDir.parentObjectID),
                         nextCookie: nextCookie,
                         attributes: nil)
                 } else {
@@ -374,16 +397,16 @@ extension MTPVolume: FSVolume.Operations {
                     packed = packer.packEntry(
                         name: FSFileName(string: info.name),
                         itemType: info.isDirectory ? .directory : .file,
-                        itemID: MTPItem.identifier(for: info.objectID),
+                        itemID: self.identity.identifier(for: info.objectID),
                         nextCookie: nextCookie,
-                        attributes: attributes != nil ? FSItem.Attributes.make(for: info) : nil
+                        attributes: attributes != nil ? FSItem.Attributes.make(for: info, identity: self.identity) : nil
                     )
                 }
 
                 if !packed {
                     break
                 }
-                
+
                 index += 1
             }
 
@@ -402,6 +425,15 @@ extension MTPVolume: FSVolume.Operations {
     ) async throws -> (FSItem, FSFileName) {
         guard let dir = directory as? MTPItem, let nameStr = name.string else {
             throw POSIXError(.EIO)
+        }
+
+        #if DEBUG
+        log.info("createItem: name=\(nameStr, privacy: .public) inDir=\(dir.objectID) type=\(String(describing: type), privacy: .public)")
+        #endif
+
+        // Delete the file immediately instead of hoarding .Trashes on the device
+        if dir.isRoot, nameStr == ".Trashes" {
+            throw POSIXError(.EPERM)
         }
 
         let service = try requireService()
@@ -440,21 +472,43 @@ extension MTPVolume: FSVolume.Operations {
         guard let destinationDirectory = destinationDirectory as? MTPItem else {
             throw POSIXError(.EIO)
         }
-        
+
         guard let newName = destinationName.string else {
             throw POSIXError(.EIO)
         }
-        
-        // MTP renames in place and has no combined move
-        // A cross-directory rename would rename without moving
-        guard sourceDirectory.objectID == destinationDirectory.objectID else {
-            throw POSIXError(.EXDEV)
+
+        #if DEBUG
+        log.info("renameItem: \(sourceName.string ?? "?", privacy: .public) -> \(newName, privacy: .public) srcDir=\(sourceDirectory.objectID) dstDir=\(destinationDirectory.objectID)")
+        #endif
+
+        // Delete the file immediately instead of hoarding .Trashes on the device
+        if destinationDirectory.isRoot, newName == ".Trashes" {
+            throw POSIXError(.EPERM)
         }
 
-        try await requireService().renameObject(objectID: mtpItem.objectID, newName: newName)
-        mtpItem.updateInfo { info in
-            info.name = newName
+        let service = try requireService()
+        let crossDirectory = sourceDirectory.objectID != destinationDirectory.objectID
+
+        if newName != sourceName.string {
+            try await service.renameObject(objectID: mtpItem.objectID, newName: newName)
+            mtpItem.updateInfo { info in
+                info.name = newName
+            }
         }
+
+        if crossDirectory {
+            do {
+                try await service.moveObject(
+                    objectID: mtpItem.objectID,
+                    toParentID: destinationDirectory.objectID
+                )
+            } catch let error as POSIXError where error.code == .ENOTSUP {
+                sourceDirectory.invalidateListing()
+                throw POSIXError(.EXDEV)
+            }
+            destinationDirectory.invalidateListing()
+        }
+
         sourceDirectory.invalidateListing()
         return destinationName
     }
@@ -466,6 +520,7 @@ extension MTPVolume: FSVolume.Operations {
 
         try await requireService().deleteObject(objectID: mtpItem.objectID)
         forget(objectID: mtpItem.objectID)
+        identity.retire(objectID: mtpItem.objectID)
         dir.invalidateListing()
     }
 
@@ -533,3 +588,4 @@ extension MTPVolume: FSVolume.ReadWriteOperations {
         return contents.count
     }
 }
+

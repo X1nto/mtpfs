@@ -31,6 +31,9 @@ protocol MTPServiceProtocol {
     func getObjectInfo(objectID: UInt32, reply: @escaping (Data?, Error?) -> Void)
     func deleteObject(objectID: UInt32, reply: @escaping (Error?) -> Void)
     func renameObject(objectID: UInt32, newName: String, reply: @escaping (Error?) -> Void)
+    /// Re-parents an object in place. Replies with ENOTSUP if the device can't do it, so the
+    /// caller can fall back to EXDEV and let Finder copy-then-delete.
+    func moveObject(objectID: UInt32, toParentID: UInt32, reply: @escaping (Error?) -> Void)
 
     /// - Parameter reply: Object ID of the newly created file
     func createFile(parentID: UInt32, name: String, size: UInt64, reply: @escaping (UInt32, Error?) -> Void)

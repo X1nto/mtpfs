@@ -2,18 +2,15 @@ import FSKit
 import Foundation
 
 final class MTPItem: FSItem {
-    
+
     // MTP's reserved handle for "the root of the storage"
     static let rootObjectID: UInt32 = 0xFFFFFFFF
 
-    static func identifier(for objectID: UInt32) -> FSItem.Identifier {
-        // 1 << 32 to avoid clashing with FSKit's reserved IDs
-        objectID == rootObjectID
-            ? .rootDirectory
-            : FSItem.Identifier(rawValue: UInt64(objectID) + 1 << 32) ?? .invalid
-    }
+    private(set) var objectID: UInt32
 
-    let objectID: UInt32
+    func adoptObjectID(_ newObjectID: UInt32) {
+        objectID = newObjectID
+    }
 
     let parentObjectID: UInt32
 
@@ -23,12 +20,16 @@ final class MTPItem: FSItem {
     private var _snapshot: DirectorySnapshot?
     private var _snapshotStamp: UInt64 = 0
     private var _pendingListing: Task<DirectorySnapshot, Error>?
-    
+
     private static let snapshotTTL: UInt64 = 5 * NSEC_PER_SEC
 
     private var _generation: UInt64 = 0
 
-    init(objectID: UInt32, parentObjectID: UInt32 = MTPItem.rootObjectID, info: MTPObjectInfo? = nil) {
+    init(
+        objectID: UInt32,
+        parentObjectID: UInt32 = MTPItem.rootObjectID,
+        info: MTPObjectInfo? = nil
+    ) {
         self.objectID = objectID
         self.parentObjectID = parentObjectID
         self._info = info
@@ -58,11 +59,12 @@ final class MTPItem: FSItem {
         }
     }
 
-    func attributes() -> FSItem.Attributes {
+    func attributes(identity: MTPIdentityTable) -> FSItem.Attributes {
         guard let info else {
-            return isRoot ? .makeForRoot() : .makeForUnknownItem(self)
+            return isRoot ? .makeForRoot() : .makeForUnknownItem(self, identity: identity)
         }
-        return .make(for: info)
+
+        return .make(for: info, identity: identity)
     }
 
     var snapshot: DirectorySnapshot? {
@@ -80,42 +82,40 @@ final class MTPItem: FSItem {
     }
 
     func listingTask(orInstall make: () -> Task<DirectorySnapshot, Error>) -> (task: Task<DirectorySnapshot, Error>, generation: UInt64) {
-        stateLock.lock()
-        if let existing = _pendingListing {
-            let generation = _generation
-            stateLock.unlock()
+        let (existing, generation) = stateLock.withLock { (_pendingListing, _generation) }
+        if let existing {
             return (existing, generation)
         }
-        let generation = _generation
-        stateLock.unlock()
 
         let task = make()
 
-        stateLock.lock()
-        if let raced = _pendingListing {
-            stateLock.unlock()
-            task.cancel()
-            return (raced, generation)
+        return stateLock.withLock {
+            if let raced = _pendingListing {
+                task.cancel()
+                return (raced, generation)
+            }
+            _pendingListing = task
+            return (task, generation)
         }
-        _pendingListing = task
-        stateLock.unlock()
-        return (task, generation)
     }
 
     @discardableResult
     func publish(_ snapshot: DirectorySnapshot, ifGeneration generation: UInt64) -> Bool {
         stateLock.withLock {
             _pendingListing = nil
-            guard _generation == generation else { return false }
+
+            if _generation != generation {
+                return false
+            }
+
             _snapshot = snapshot
             _snapshotStamp = DispatchTime.now().uptimeNanoseconds
             return true
         }
     }
 
-    func clearPendingListing(ifGeneration generation: UInt64) {
+    func clearPendingListing() {
         stateLock.withLock {
-            guard _generation == generation else { return }
             _pendingListing = nil
         }
     }
@@ -154,7 +154,7 @@ struct DirectorySnapshot {
             }
             mix(entry.fileSize)
         }
-        
+
         // FSKit treats 0 as "verifier not yet established"
         return hash == 0 ? 1 : hash
     }
@@ -167,16 +167,14 @@ private let mtpFallbackTimespec: timespec = {
 }()
 
 extension FSItem.Attributes {
-    
+
     private static let mtpDirMode = UInt32(S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)
     private static let mtpFileMode = UInt32(S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 
-    static func make(for info: MTPObjectInfo) -> FSItem.Attributes {
+    static func make(for info: MTPObjectInfo, identity: MTPIdentityTable) -> FSItem.Attributes {
         let attrs = FSItem.Attributes()
-        attrs.fileID = MTPItem.identifier(for: info.objectID)
-        attrs.parentID = (info.parentID == 0 || info.parentID == MTPItem.rootObjectID)
-            ? .rootDirectory
-            : MTPItem.identifier(for: info.parentID)
+        attrs.fileID = identity.identifier(for: info.objectID)
+        attrs.parentID = identity.parentIdentifier(for: info.parentID)
         attrs.type = info.isDirectory ? .directory : .file
         attrs.mode = info.isDirectory ? mtpDirMode : mtpFileMode
         attrs.linkCount = 1
@@ -189,12 +187,10 @@ extension FSItem.Attributes {
         return attrs
     }
 
-    fileprivate static func makeForUnknownItem(_ item: MTPItem) -> FSItem.Attributes {
+    fileprivate static func makeForUnknownItem(_ item: MTPItem, identity: MTPIdentityTable) -> FSItem.Attributes {
         let attrs = FSItem.Attributes()
-        attrs.fileID = MTPItem.identifier(for: item.objectID)
-        attrs.parentID = item.parentObjectID == MTPItem.rootObjectID || item.parentObjectID == 0
-            ? .rootDirectory
-            : MTPItem.identifier(for: item.parentObjectID)
+        attrs.fileID = identity.identifier(for: item.objectID)
+        attrs.parentID = identity.parentIdentifier(for: item.parentObjectID)
         attrs.type = .file
         attrs.mode = mtpFileMode
         attrs.linkCount = 1
@@ -222,7 +218,7 @@ extension FSItem.Attributes {
         attrs.stampAllTimes(modify: nil, birth: nil)
         return attrs
     }
-    
+
     private func stampAllTimes(modify: timespec?, birth: timespec?) {
         let m = modify ?? mtpFallbackTimespec
         let b = birth ?? m

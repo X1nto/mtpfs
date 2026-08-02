@@ -20,9 +20,12 @@ public struct MTPStorage: Sendable {
 public struct MTPCapabilities: Sendable {
     /// random-access reads
     public let rangedRead: Bool
-    
+
     /// in-place editing
     public let editObjects: Bool
+
+    /// re-parenting an object without moving its bytes
+    public let moveObject: Bool
 }
 
 public struct MTPDeviceMatch: Sendable {

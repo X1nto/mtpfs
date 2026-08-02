@@ -1,6 +1,8 @@
 import Foundation
 import os
 
+private let log = Logger(subsystem: "dev.xinto.mtpfs.fsext", category: "ServiceBridge")
+
 struct MTPServiceClient {
     let connection: NSXPCConnection
 
@@ -82,12 +84,18 @@ struct MTPServiceClient {
         }
     }
 
+    func moveObject(objectID: UInt32, toParentID: UInt32) async throws {
+        try await perform { service, reply in
+            service.moveObject(objectID: objectID, toParentID: toParentID, reply: reply)
+        }
+    }
+
     private func perform<T>(_ body: (any MTPServiceProtocol, @escaping (Result<T, any Error>) -> Void) -> Void) async throws -> T {
         try await withCheckedThrowingContinuation { continuation in
             let once = OnceGuard()
             let finish: @Sendable (Result<T, any Error>) -> Void = { result in
                 if once.claim() {
-                    continuation.resume(with: result)
+                    continuation.resume(with: result.mapError(Self.posixError))
                 }
             }
 
@@ -135,5 +143,14 @@ struct MTPServiceClient {
                 finish(error.map { .failure($0) } ?? .success(value))
             }
         }
+    }
+    
+    private static func posixError(_ error: any Error) -> any Error {
+        if (error as NSError).domain == NSPOSIXErrorDomain {
+            return error
+        }
+
+        log.error("XPC failure mapped to EIO: \(String(describing: error), privacy: .public)")
+        return POSIXError(.EIO)
     }
 }

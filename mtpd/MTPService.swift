@@ -57,7 +57,7 @@ final class MTPService: NSObject, MTPServiceProtocol {
                     reply(nil, POSIXError(.EBUSY))
                     return
                 }
-                
+
                 self.sessionOwners.insert(owner)
                 self.encode(cached, reply: reply)
                 return
@@ -105,18 +105,18 @@ final class MTPService: NSObject, MTPServiceProtocol {
                 #if DEBUG
                 log.info("device did not become ready within the authorization window")
                 #endif
-                
+
                 releaseDevice()
                 reply(nil, POSIXError(.ETIMEDOUT))
                 return
             }
-            
+
             #if DEBUG
             if attempt == 0 {
                 log.info("device open but storage not ready (authorization pending?)")
             }
             #endif
-            
+
             queue.asyncAfter(deadline: .now() + Self.readyPollInterval) {
                 if self.device !== device {
                     reply(nil, POSIXError(.ENODEV))
@@ -178,11 +178,11 @@ final class MTPService: NSObject, MTPServiceProtocol {
             if self.device == nil {
                 return
             }
-            
+
             #if DEBUG
             log.info("forceCloseSession: releasing device, discarding \(self.sessionOwners.count) holder(s)")
             #endif
-            
+
             self.sessionOwners.removeAll()
             self.releaseDevice()
         }
@@ -192,7 +192,7 @@ final class MTPService: NSObject, MTPServiceProtocol {
         if sessionOwners.remove(owner) == nil {
             return
         }
-        
+
         if sessionOwners.isEmpty {
             releaseDevice()
         }
@@ -222,7 +222,7 @@ final class MTPService: NSObject, MTPServiceProtocol {
                 reply(nil, POSIXError(.ENODEV))
                 return
             }
-            
+
             do {
                 let objects = try device.listChildren(parentID: parentID)
                 self.encode(objects.map(Self.dto), reply: reply)
@@ -309,7 +309,7 @@ final class MTPService: NSObject, MTPServiceProtocol {
                 reply(POSIXError(.ENODEV))
                 return
             }
-            
+
             do {
                 try device.write(objectID: objectID, offset: offset, data: data)
                 self.stage.invalidate(objectID)
@@ -326,7 +326,7 @@ final class MTPService: NSObject, MTPServiceProtocol {
                 reply(POSIXError(.ENODEV))
                 return
             }
-            
+
             do {
                 try device.truncate(objectID: objectID, to: size)
                 self.stage.invalidate(objectID)
@@ -343,7 +343,7 @@ final class MTPService: NSObject, MTPServiceProtocol {
                 reply(0, POSIXError(.ENODEV))
                 return
             }
-            
+
             do {
                 reply(try device.createFile(parentID: parentID, name: name), nil)
             } catch {
@@ -358,7 +358,7 @@ final class MTPService: NSObject, MTPServiceProtocol {
                 reply(0, POSIXError(.ENODEV))
                 return
             }
-            
+
             do {
                 reply(try device.createFolder(parentID: parentID, name: name), nil)
             } catch {
@@ -373,10 +373,16 @@ final class MTPService: NSObject, MTPServiceProtocol {
                 reply(POSIXError(.ENODEV))
                 return
             }
-            
+
             self.stage.invalidate(objectID)
-            
+
             do {
+                if try device.metadata(objectID: objectID).isDirectory,
+                   try !device.listChildren(parentID: objectID).isEmpty
+                {
+                    reply(POSIXError(.ENOTEMPTY))
+                    return
+                }
                 try device.delete(objectID: objectID)
                 reply(nil)
             } catch {
@@ -391,7 +397,7 @@ final class MTPService: NSObject, MTPServiceProtocol {
                 reply(POSIXError(.ENODEV))
                 return
             }
-            
+
             do {
                 try device.rename(objectID: objectID, to: newName)
                 reply(nil)
@@ -401,11 +407,27 @@ final class MTPService: NSObject, MTPServiceProtocol {
         }
     }
 
+    func moveObject(objectID: UInt32, toParentID: UInt32, reply: @escaping (Error?) -> Void) {
+        queue.async {
+            guard let device = self.device else {
+                reply(POSIXError(.ENODEV))
+                return
+            }
+
+            do {
+                try device.move(objectID: objectID, toParent: toParentID)
+                reply(nil)
+            } catch {
+                reply(self.fail(error, "moveObject(\(objectID) -> \(toParentID))"))
+            }
+        }
+    }
+
     private func fail(_ error: Error, _ operation: String) -> Error {
         guard let mtp = error as? MTPError else {
             return error
         }
-        
+
         if mtp.isFatal {
             log.error("\(operation, privacy: .public): device lost")
             handleDeviceLost()
@@ -442,7 +464,7 @@ final class MTPService: NSObject, MTPServiceProtocol {
 }
 
 private extension MTPError {
-    
+
     func posixError() -> POSIXError {
         switch self {
         case .deviceNotFound: POSIXError(.ENODEV)
