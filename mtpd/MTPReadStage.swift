@@ -1,10 +1,10 @@
 import Foundation
 import os
 
-private let log = Logger(subsystem: "dev.xinto.mtpfs.mtpd", category: "Stage")
+private let log = Logger(subsystem: "dev.xinto.mtpfs.mtpd", category: "ReadStage")
 
 /// Cache of whole MTP objects, used when a device cannot serve ranged reads.
-final class MTPObjectStage {
+final class MTPReadStage {
 
     /// Receives one chunk of a streaming download. Returning false aborts the transfer.
     typealias ChunkSink = (UnsafeRawBufferPointer) -> Bool

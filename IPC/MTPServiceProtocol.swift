@@ -45,4 +45,6 @@ protocol MTPServiceProtocol {
     func writeFile(objectID: UInt32, offset: UInt64, data: Data, reply: @escaping (Error?) -> Void)
     /// Sets the object's length, growing or shrinking it.
     func truncateFile(objectID: UInt32, size: UInt64, reply: @escaping (Error?) -> Void)
+    /// Flush any staged writes and return the committed object ID (or 0 if unchanged).
+    func closeFile(objectID: UInt32, reply: @escaping (UInt32, Error?) -> Void)
 }

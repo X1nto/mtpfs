@@ -20,6 +20,7 @@ final class MTPItem: FSItem {
     private var _snapshot: DirectorySnapshot?
     private var _snapshotStamp: UInt64 = 0
     private var _pendingListing: Task<DirectorySnapshot, Error>?
+    private var _hasOpenWriter = false
 
     private static let snapshotTTL: UInt64 = 5 * NSEC_PER_SEC
 
@@ -117,6 +118,17 @@ final class MTPItem: FSItem {
     func clearPendingListing() {
         stateLock.withLock {
             _pendingListing = nil
+        }
+    }
+
+    func noteWriterOpened() {
+        stateLock.withLock { _hasOpenWriter = true }
+    }
+
+    func takeWriterFlag() -> Bool {
+        stateLock.withLock {
+            defer { _hasOpenWriter = false }
+            return _hasOpenWriter
         }
     }
 

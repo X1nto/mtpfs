@@ -26,6 +26,15 @@ public struct MTPCapabilities: Sendable {
 
     /// re-parenting an object without moving its bytes
     public let moveObject: Bool
+
+    public var writeStrategy: MTPWriteStrategy {
+        editObjects ? .incremental : .wholeFile
+    }
+}
+
+public enum MTPWriteStrategy: String, Sendable, CaseIterable {
+    case incremental
+    case wholeFile
 }
 
 public struct MTPDeviceMatch: Sendable {

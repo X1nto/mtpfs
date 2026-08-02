@@ -90,6 +90,12 @@ struct MTPServiceClient {
         }
     }
 
+    func closeFile(objectID: UInt32) async throws -> UInt32 {
+        try await perform { service, reply in
+            service.closeFile(objectID: objectID, reply: reply)
+        }
+    }
+
     private func perform<T>(_ body: (any MTPServiceProtocol, @escaping (Result<T, any Error>) -> Void) -> Void) async throws -> T {
         try await withCheckedThrowingContinuation { continuation in
             let once = OnceGuard()

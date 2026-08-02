@@ -177,6 +177,11 @@ extension MTPVolume: FSVolume.Operations {
         return capabilities
     }
 
+    var enableOpenUnlinkEmulation: Bool {
+        get { true }
+        set {}
+    }
+
     var volumeStatistics: FSStatFSResult {
         refreshStorageIfStale()
         let info = storageLock.withLock { _storageInfo }
@@ -555,26 +560,38 @@ extension MTPVolume: FSVolume.ReadWriteOperations {
             throw POSIXError(.EIO)
         }
 
+        guard offset >= 0 else {
+            throw POSIXError(.EINVAL)
+        }
+
         let data = try await requireService().readFile(
             objectID: mtpItem.objectID,
             offset: UInt64(offset),
             length: UInt64(length)
         )
-        let count = min(data.count, length)
-        if count > 0 {
-            _ = buffer.withUnsafeMutableBytes { destination in
-                data.withUnsafeBytes { source in
-                    memcpy(destination.baseAddress!, source.baseAddress!, count)
+
+        return buffer.withUnsafeMutableBytes { destination in
+            let count = min(data.count, min(length, destination.count))
+            guard count > 0, let target = destination.baseAddress else {
+                return 0
+            }
+            data.withUnsafeBytes { source in
+                if let origin = source.baseAddress {
+                    memcpy(target, origin, count)
                 }
             }
+            return count
         }
-        return count
     }
 
     func write(contents: Data, to item: FSItem, at offset: off_t) async throws -> Int {
         guard let mtpItem = item as? MTPItem else {
             throw POSIXError(.EIO)
         }
+
+        #if DEBUG
+        log.notice("write: obj=\(mtpItem.objectID) off=\(offset) len=\(contents.count)")
+        #endif
 
         try await requireService().writeFile(
             objectID: mtpItem.objectID,
@@ -589,3 +606,36 @@ extension MTPVolume: FSVolume.ReadWriteOperations {
     }
 }
 
+extension MTPVolume: FSVolume.OpenCloseOperations {
+
+    func openItem(_ item: FSItem, modes: FSVolume.OpenModes) async throws {
+        guard let mtpItem = item as? MTPItem else {
+            throw POSIXError(.EIO)
+        }
+        if modes.contains(.write) {
+            mtpItem.noteWriterOpened()
+        }
+    }
+
+    func closeItem(_ item: FSItem, modes: FSVolume.OpenModes) async throws {
+        guard let mtpItem = item as? MTPItem else {
+            throw POSIXError(.EIO)
+        }
+
+        guard !modes.contains(.write), mtpItem.takeWriterFlag() else {
+            return
+        }
+
+        let previousID = mtpItem.objectID
+        let committedID = try await requireService().closeFile(objectID: previousID)
+
+        guard committedID != 0, committedID != previousID else {
+            return
+        }
+
+        identity.rebind(from: previousID, to: committedID)
+        mtpItem.adoptObjectID(committedID)
+        mtpItem.updateInfo { $0.objectID = committedID }
+        rekeyItem(from: previousID, to: committedID, item: mtpItem)
+    }
+}

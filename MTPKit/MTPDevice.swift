@@ -466,6 +466,54 @@ public final class MTPDevice {
         }
     }
 
+    public func sendFile(
+        parentID: UInt32,
+        name: String,
+        size: UInt64,
+        fileDescriptor: Int32
+    ) throws -> UInt32 {
+        try Self.queue.sync {
+            guard let handle = self.handle else {
+                throw MTPError.deviceNotFound
+            }
+
+            flushEdit()
+
+            guard let file = LIBMTP_new_file_t() else {
+                throw MTPError.outOfMemory
+            }
+
+            guard let filename = name.withCString({ strdup($0) }) else {
+                LIBMTP_destroy_file_t(file)
+                throw MTPError.outOfMemory
+            }
+
+            file.pointee.parent_id = parentID
+            file.pointee.storage_id = storageID
+            file.pointee.filesize = size
+            file.pointee.filetype = LIBMTP_FILETYPE_UNKNOWN
+            file.pointee.filename = filename
+
+            LIBMTP_Clear_Errorstack(handle)
+
+            let ret = LIBMTP_Send_File_From_File_Descriptor(handle, fileDescriptor, file, nil, nil)
+            let newID = file.pointee.item_id
+            LIBMTP_destroy_file_t(file)
+
+            if ret != 0 {
+                // return can be non-ok if post-create metadata fetch failed. We don't care about that.
+                if newID != 0 {
+                    log.error("sendFile(parent=\(parentID)): object \(newID) created but libmtp reported failure")
+                    LIBMTP_Clear_Errorstack(handle)
+                    return newID
+                }
+                throw fail(handle, "Send_File_From_File_Descriptor(parent=\(parentID), size=\(size))")
+            }
+
+            return newID
+        }
+    }
+
     public func createFolder(parentID: UInt32, name: String) throws -> UInt32 {
         try Self.queue.sync {
             guard let handle = self.handle else {
