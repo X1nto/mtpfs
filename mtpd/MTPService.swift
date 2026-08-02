@@ -14,6 +14,9 @@ final class MTPService: NSObject, MTPServiceProtocol {
 
     private let stage = MTPObjectStage()
 
+    private static let transientAttempts = 3
+    private static let transientRetryInterval: TimeInterval = 0.2
+
     private let queue = DispatchQueue(label: "dev.xinto.mtpfs.session", qos: .userInitiated)
 
     private var sessionOwners: Set<Int32> = []
@@ -224,8 +227,10 @@ final class MTPService: NSObject, MTPServiceProtocol {
             }
 
             do {
-                let objects = try device.listChildren(parentID: parentID)
-                self.encode(objects.map(Self.dto), reply: reply)
+                let objects = try self.retryingTransient {
+                    try device.listChildren(parentID: parentID)
+                }.map(Self.dto)
+                self.encode(objects, reply: reply)
             } catch {
                 reply(nil, self.fail(error, "listObjects(parent=\(parentID))"))
             }
@@ -461,6 +466,21 @@ final class MTPService: NSObject, MTPServiceProtocol {
             reply(nil, error)
         }
     }
+
+    private func retryingTransient<T>(_ operation: () throws -> T) throws -> T {
+        var attempt = 0
+        while true {
+            do {
+                return try operation()
+            } catch let error as MTPError where error == .deviceBusy || error == .storageNotReady {
+                attempt += 1
+                guard attempt < Self.transientAttempts else {
+                    throw error
+                }
+                Thread.sleep(forTimeInterval: Self.transientRetryInterval * Double(attempt))
+            }
+        }
+    }
 }
 
 private extension MTPError {
@@ -483,6 +503,8 @@ private extension MTPError {
         case .storageNotReady: POSIXError(.EAGAIN)
         case .ioFailure: POSIXError(.EIO)
         case .deviceError: POSIXError(.EIO)
+        case .objectTooLarge: POSIXError(.EFBIG)
+        case .partialDeletion: POSIXError(.EIO)
         }
     }
 }

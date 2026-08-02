@@ -1,4 +1,5 @@
 import CLibMTP
+import CLibPTP
 import Foundation
 import os
 
@@ -30,6 +31,8 @@ public final class MTPDevice {
     private var editingObjectID: UInt32?
     private var editingSize: UInt64 = 0
     private var editFlush: DispatchWorkItem?
+
+    private var bulkListing: BulkListingSupport = .untried
 
     public enum StorageProbe {
         case ready(MTPStorage)
@@ -191,6 +194,7 @@ public final class MTPDevice {
             guard let handle = self.handle else {
                 throw MTPError.deviceNotFound
             }
+
             flushEdit()
 
             LIBMTP_Clear_Errorstack(handle)
@@ -210,18 +214,28 @@ public final class MTPDevice {
                 free(handles)
             }
 
+            let children = UnsafeBufferPointer(start: handles, count: Int(count))
+
+            let bulk = bulkListing != .unsupported
+                ? fetchBulkObjectProperties(parentID: parentID, handle: handle, support: &bulkListing)
+                : nil
+
             var results: [MTPObject] = []
             results.reserveCapacity(Int(count))
 
-            for index in 0..<Int(count) {
-                guard let file = LIBMTP_Get_Filemetadata(handle, handles[index]) else {
+            for objectID in children {
+                if let object = bulk?[objectID] {
+                    results.append(object)
+                    continue
+                }
+
+                guard let file = LIBMTP_Get_Filemetadata(handle, objectID) else {
                     log.error(
                         """
-                        listChildren(parent=\(parentID)): metadata fetch failed for handle \
-                        \(handles[index]) (\(index + 1) of \(count))
+                        listChildren(parent=\(parentID)): skipping handle \(objectID) because metadata fetch failed
                         """
                     )
-                    throw MTPError.deviceError
+                    continue
                 }
                 results.append(Self.object(from: file))
                 LIBMTP_destroy_file_t(file)

@@ -2,3 +2,8 @@ module CLibMTP {
     header "libmtp.h"
     export *
 }
+
+module CLibPTP {
+    header "mtpfs-ptp.h"
+    export *
+}

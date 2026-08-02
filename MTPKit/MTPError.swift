@@ -1,4 +1,5 @@
 import CLibMTP
+import CLibPTP
 import os
 
 private let log = Logger(subsystem: "dev.xinto.mtpfs.mtpkit", category: "Error")
@@ -20,6 +21,8 @@ public enum MTPError: Error, Equatable, Sendable {
     case storageOffline
     case storageNotReady
     case writeProtected
+    case objectTooLarge
+    case partialDeletion
 
     public var isFatal: Bool {
         switch self {
@@ -32,23 +35,6 @@ public enum MTPError: Error, Equatable, Sendable {
 }
 
 extension MTPError {
-
-    private static let ptpOperationNotSupported: UInt16 = 0x2005
-    private static let ptpInvalidObjectHandle: UInt16 = 0x2009
-    private static let ptpInvalidObjectFormatCode: UInt16 = 0x200B
-    private static let ptpStoreFull: UInt16 = 0x200C
-    private static let ptpObjectWriteProtected: UInt16 = 0x200D
-    private static let ptpStoreReadOnly: UInt16 = 0x200E
-    private static let ptpAccessDenied: UInt16 = 0x200F
-    private static let ptpPartialDeletion: UInt16 = 0x2012
-    private static let ptpStoreNotAvailable: UInt16 = 0x2013
-    private static let ptpNoValidObjectInfo: UInt16 = 0x2015
-    private static let ptpDeviceBusy: UInt16 = 0x2019
-    private static let ptpInvalidParentObject: UInt16 = 0x201A
-    private static let ptpSpecificationOfDestinationUnsupported: UInt16 = 0x2020
-    private static let ptpErrorTimeout: UInt16 = 0x02FA
-    private static let ptpErrorCancel: UInt16 = 0x02FB
-    private static let ptpErrorIO: UInt16 = 0x02FF
 
     static func diagnose(
         _ device: UnsafeMutablePointer<LIBMTP_mtpdevice_struct>,
@@ -68,12 +54,16 @@ extension MTPError {
             switch current.pointee.errornumber {
             case LIBMTP_ERROR_NO_DEVICE_ATTACHED:
                 verdict = .deviceNotFound
-            case LIBMTP_ERROR_MEMORY_ALLOCATION:
-                verdict = verdict ?? .outOfMemory
             case LIBMTP_ERROR_STORAGE_FULL:
                 verdict = .storageFull
+            case LIBMTP_ERROR_MEMORY_ALLOCATION:
+                verdict = verdict ?? .outOfMemory
             case LIBMTP_ERROR_CANCELLED:
                 verdict = verdict ?? .operationCancelled
+            case LIBMTP_ERROR_CONNECTING:
+                verdict = verdict ?? .deviceBusy
+            case LIBMTP_ERROR_GENERAL:
+                verdict = verdict ?? .deviceError
             case LIBMTP_ERROR_PTP_LAYER, LIBMTP_ERROR_USB_LAYER:
                 if let ptp = ptpCode(in: text), let mapped = map(ptp) {
                     verdict = mapped
@@ -113,30 +103,41 @@ extension MTPError {
 
     private static func map(_ ptp: UInt16) -> MTPError? {
         switch ptp {
-        case ptpOperationNotSupported:
+        case UInt16(PTP_RC_OperationNotSupported):
             return .operationUnsupported
-        case ptpStoreFull:
+        case UInt16(PTP_RC_StoreFull):
             return .storageFull
-        case ptpAccessDenied:
+        case UInt16(PTP_RC_AccessDenied):
             return .accessDenied
-        case ptpObjectWriteProtected, ptpStoreReadOnly:
+        case UInt16(PTP_RC_ObjectWriteProtected), UInt16(PTP_RC_StoreReadOnly):
             return .writeProtected
-        case ptpInvalidObjectHandle, ptpInvalidParentObject:
+        case UInt16(PTP_RC_InvalidObjectHandle), UInt16(PTP_RC_InvalidParentObject):
             return .objectNotFound
-        case ptpStoreNotAvailable:
+        case UInt16(PTP_RC_StoreNotAvailable):
             return .storageOffline
-        case ptpDeviceBusy:
+        case UInt16(PTP_RC_DeviceBusy):
             return .deviceBusy
-        case ptpErrorTimeout:
+        case UInt16(PTP_ERROR_TIMEOUT):
             return .deviceTimedOut
-        case ptpErrorCancel:
+        case UInt16(PTP_ERROR_CANCEL):
             return .operationCancelled
-        case ptpErrorIO:
+        case UInt16(PTP_ERROR_IO):
             return .ioFailure
-        case ptpInvalidObjectFormatCode, ptpNoValidObjectInfo, ptpSpecificationOfDestinationUnsupported:
+        case UInt16(PTP_RC_InvalidObjectFormatCode), UInt16(PTP_RC_NoValidObjectInfo), UInt16(PTP_RC_SpecificationOfDestinationUnsupported):
             return .invalidData
-        case ptpPartialDeletion:
-            return .folderNotEmpty
+        case UInt16(PTP_RC_PartialDeletion):
+            return .partialDeletion
+        case UInt16(PTP_RC_MTP_Object_Too_Large):
+            return .objectTooLarge
+        case UInt16(PTP_RC_MTP_Invalid_ObjectPropCode), UInt16(PTP_RC_MTP_Invalid_ObjectProp_Format),
+             UInt16(PTP_RC_MTP_Invalid_ObjectProp_Value), UInt16(PTP_RC_MTP_Invalid_Dataset):
+            return .invalidData
+        case UInt16(PTP_RC_IncompleteTransfer):
+            return .ioFailure
+        case UInt16(PTP_RC_InvalidStorageId):
+            return .storageNotReady
+        case UInt16(PTP_RC_GeneralError), UInt16(PTP_RC_SessionNotOpen):
+            return .deviceError
         default:
             return nil
         }
