@@ -26,7 +26,7 @@ public enum MTPError: Error, Equatable, Sendable {
 
     public var isFatal: Bool {
         switch self {
-        case .deviceNotFound, .storageOffline, .ioFailure:
+        case .deviceNotFound, .storageOffline:
             return true
         default:
             return false

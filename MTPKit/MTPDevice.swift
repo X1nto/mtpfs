@@ -29,10 +29,12 @@ public final class MTPDevice {
     public let capabilities: MTPCapabilities
 
     private var editingObjectID: UInt32?
-    private var editingSize: UInt64 = 0
+    private var editingSize: UInt64?
     private var editFlush: DispatchWorkItem?
 
     private var bulkListing: BulkListingSupport = .untried
+
+    private var pendingEditFailure: (objectID: UInt32, error: MTPError)?
 
     public enum StorageProbe {
         case ready(MTPStorage)
@@ -78,8 +80,6 @@ public final class MTPDevice {
             guard let handle = self.handle else {
                 return .gone(.deviceNotFound)
             }
-
-            flushEdit()
 
             LIBMTP_Clear_Errorstack(handle)
 
@@ -188,14 +188,19 @@ public final class MTPDevice {
         }
     }
 
+    deinit {
+        editFlush?.cancel()
+        if let handle {
+            LIBMTP_Release_Device(handle)
+        }
+    }
+
 
     public func listChildren(parentID: UInt32) throws -> [MTPObject] {
         try Self.queue.sync {
             guard let handle = self.handle else {
                 throw MTPError.deviceNotFound
             }
-
-            flushEdit()
 
             LIBMTP_Clear_Errorstack(handle)
 
@@ -250,10 +255,13 @@ public final class MTPDevice {
                 throw MTPError.deviceNotFound
             }
 
-            flushEdit()
+            try consumePendingFailure(for: objectID)
+            flushEdit(touching: objectID)
+
+            LIBMTP_Clear_Errorstack(handle)
 
             guard let file = LIBMTP_Get_Filemetadata(handle, objectID) else {
-                throw MTPError.objectNotFound
+                throw MTPError.diagnose(handle, fallback: .objectNotFound, doing: "metadata(\(objectID))")
             }
 
             defer {
@@ -270,7 +278,8 @@ public final class MTPDevice {
                 throw MTPError.deviceNotFound
             }
 
-            flushEdit()
+            try consumePendingFailure(for: objectID)
+            flushEdit(touching: objectID)
 
             var accumulated = Data()
             accumulated.reserveCapacity(Int(clamping: length))
@@ -285,6 +294,10 @@ public final class MTPDevice {
 
                 let ret = LIBMTP_GetPartialObject(handle, objectID, cursor, UInt32(clamping: remaining), &raw, &got)
                 if ret != 0 {
+                    // libmtp can have allocated the buffer before the response code came back.
+                    if let raw {
+                        free(raw)
+                    }
                     throw fail(handle, "GetPartialObject(obj=\(objectID), off=\(cursor))")
                 }
 
@@ -295,10 +308,11 @@ public final class MTPDevice {
                     break
                 }
 
-                accumulated.append(raw, count: Int(got))
+                let accepted = min(UInt64(got), remaining)
+                accumulated.append(raw, count: Int(accepted))
                 free(raw)
-                cursor += UInt64(got)
-                remaining -= UInt64(got)
+                cursor += accepted
+                remaining -= accepted
             }
             return accumulated
         }
@@ -311,7 +325,8 @@ public final class MTPDevice {
                 throw MTPError.deviceNotFound
             }
 
-            flushEdit()
+            try consumePendingFailure(for: objectID)
+            flushEdit(touching: objectID)
 
             LIBMTP_Clear_Errorstack(handle)
 
@@ -367,6 +382,7 @@ public final class MTPDevice {
                 throw MTPError.operationUnsupported
             }
 
+            try consumePendingFailure(for: objectID)
             try beginEditing(objectID, handle: handle)
             try growEdit(to: offset, objectID: objectID, handle: handle)
 
@@ -396,7 +412,7 @@ public final class MTPDevice {
                 throw error
             }
 
-            editingSize = max(editingSize, offset + UInt64(data.count))
+            editingSize = max(editingSize ?? 0, offset + UInt64(data.count))
             scheduleEditFlush()
         }
     }
@@ -411,6 +427,7 @@ public final class MTPDevice {
                 throw MTPError.operationUnsupported
             }
 
+            try consumePendingFailure(for: objectID)
             try beginEditing(objectID, handle: handle)
 
             LIBMTP_Clear_Errorstack(handle)
@@ -441,11 +458,16 @@ public final class MTPDevice {
                 throw MTPError.outOfMemory
             }
 
+            guard let filename = name.withCString({ strdup($0) }) else {
+                LIBMTP_destroy_file_t(file)
+                throw MTPError.outOfMemory
+            }
+
             file.pointee.parent_id = parentID
             file.pointee.storage_id = storageID
             file.pointee.filesize = 0
             file.pointee.filetype = LIBMTP_FILETYPE_UNKNOWN
-            file.pointee.filename = name.withCString { strdup($0) }
+            file.pointee.filename = filename
 
             LIBMTP_Clear_Errorstack(handle)
             let ret = LIBMTP_Send_File_From_Handler(
@@ -460,6 +482,16 @@ public final class MTPDevice {
             LIBMTP_destroy_file_t(file)
 
             if ret != 0 {
+                // return can be non-ok if post-create metadata fetch failed. We don't care about that.
+                if newID != 0 {
+                    log.error(
+                        """
+                        createFile(parent=\(parentID)): object \(newID) was created but libmtp reported failure
+                        """
+                    )
+                    LIBMTP_Clear_Errorstack(handle)
+                    return newID
+                }
                 throw fail(handle, "Send_File_From_Handler(parent=\(parentID))")
             }
             return newID
@@ -541,10 +573,16 @@ public final class MTPDevice {
 
     public func delete(objectID: UInt32) throws {
         try Self.queue.sync {
-            guard let handle = self.handle else { throw MTPError.deviceNotFound }
-            flushEdit()
+            guard let handle = self.handle else {
+                throw MTPError.deviceNotFound
+            }
+
+            pendingEditFailure = pendingEditFailure?.objectID == objectID ? nil : pendingEditFailure
+
+            flushEdit(touching: objectID)
 
             LIBMTP_Clear_Errorstack(handle)
+
             if LIBMTP_Delete_Object(handle, objectID) != 0 {
                 throw fail(handle, "Delete_Object(\(objectID))")
             }
@@ -553,13 +591,20 @@ public final class MTPDevice {
 
     public func rename(objectID: UInt32, to newName: String) throws {
         try Self.queue.sync {
-            guard let handle = self.handle else { throw MTPError.deviceNotFound }
-            flushEdit()
+            guard let handle = self.handle else {
+                throw MTPError.deviceNotFound
+            }
+
+            try consumePendingFailure(for: objectID)
+
+            flushEdit(touching: objectID)
 
             guard let file = LIBMTP_Get_Filemetadata(handle, objectID) else {
                 throw MTPError.objectNotFound
             }
+
             LIBMTP_Clear_Errorstack(handle)
+
             let ret = newName.withCString { LIBMTP_Set_File_Name(handle, file, $0) }
             LIBMTP_destroy_file_t(file)
             if ret != 0 {
@@ -604,6 +649,7 @@ public final class MTPDevice {
         if LIBMTP_BeginEditObject(handle, objectID) != 0 {
             let first = fail(handle, "BeginEditObject(\(objectID))")
 
+            // fail frees the handle on fatal error
             if self.handle == nil {
                 throw first
             }
@@ -618,7 +664,7 @@ public final class MTPDevice {
         }
 
         editingObjectID = objectID
-        editingSize = Self.size(of: handle, objectID: objectID) ?? 0
+        editingSize = Self.size(of: handle, objectID: objectID)
     }
 
     private func growEdit(
@@ -626,11 +672,18 @@ public final class MTPDevice {
         objectID: UInt32,
         handle: UnsafeMutablePointer<LIBMTP_mtpdevice_struct>
     ) throws {
-        if offset <= editingSize {
+        if offset == 0 {
             return
         }
 
-        let gapStart = editingSize
+        guard let known = editingSize else {
+            log.error("growEdit(obj=\(objectID), off=\(offset)): object length is unknown")
+            throw MTPError.deviceError
+        }
+
+        if offset <= known {
+            return
+        }
 
         LIBMTP_Clear_Errorstack(handle)
 
@@ -638,23 +691,6 @@ public final class MTPDevice {
             throw fail(handle, "growEdit: TruncateObject(obj=\(objectID), size=\(offset))")
         }
 
-        var zeros = [UInt8](repeating: 0, count: 64 * 1024)
-        var cursor = gapStart
-        while cursor < offset {
-            let chunk = Int(min(UInt64(64 * 1024), offset - cursor))
-            LIBMTP_Clear_Errorstack(handle)
-            let sent = zeros.withUnsafeMutableBufferPointer { buffer -> Int32 in
-                guard let base = buffer.baseAddress else {
-                    return -1
-                }
-
-                return LIBMTP_SendPartialObject(handle, objectID, cursor, base, UInt32(chunk))
-            }
-            if sent != 0 {
-                throw fail(handle, "growEdit: zero-fill at \(cursor) (\(chunk) bytes)")
-            }
-            cursor += UInt64(chunk)
-        }
         editingSize = offset
     }
 
@@ -673,8 +709,9 @@ public final class MTPDevice {
         }
 
         if LIBMTP_EndEditObject(handle, objectID) != 0 {
+            let error = MTPError.diagnose(handle, fallback: .ioFailure, doing: "EndEditObject(\(objectID))")
             log.error("EndEditObject(\(objectID)) failed")
-            LIBMTP_Clear_Errorstack(handle)
+            pendingEditFailure = (objectID, error)
         }
     }
 
@@ -685,6 +722,11 @@ public final class MTPDevice {
     }
 
     private func consumePendingFailure(for objectID: UInt32) throws {
+        guard let pending = pendingEditFailure, pending.objectID == objectID else {
+            return
+        }
+        pendingEditFailure = nil
+        throw pending.error
     }
 
     private func abandonEdit() {
